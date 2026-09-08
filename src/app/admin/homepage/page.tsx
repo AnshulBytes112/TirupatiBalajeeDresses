@@ -35,6 +35,7 @@ import {
   Check,
   Users,
   Clock,
+  TrendingUp,
 } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import {
@@ -566,8 +567,16 @@ export default function AdminHomepageCMS() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
             {/* Quick Navigation Between Admin Modules */}
+            <Link
+              href="/admin"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-[#E5DCD3] bg-white px-3 py-2 text-xs font-bold text-stone-700 hover:bg-[#F5EFEB] transition-colors shadow-2xs"
+            >
+              <TrendingUp className="h-3.5 w-3.5 text-amber-600" />
+              <span>Deep Analytics</span>
+            </Link>
+
             <Link
               href="/admin/users"
               className="inline-flex items-center gap-1.5 rounded-xl border border-[#E5DCD3] bg-white px-3 py-2 text-xs font-bold text-stone-700 hover:bg-[#F5EFEB] transition-colors shadow-2xs"

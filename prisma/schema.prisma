@@ -90,8 +90,10 @@ model User {
   passwordHash       String?
   role               Role      @default(CUSTOMER)
   permissions        Json?     // Array of granular module/feature permission strings, e.g. ["HOMEPAGE:READ", "HOMEPAGE:WRITE", "PRODUCTS:CREATE"]
-  mustChangePassword Boolean   @default(false) // Forced first login password change
-  isSuspended        Boolean   @default(false) // Super-Admin suspension
+  mustChangePassword   Boolean   @default(false) // Forced first login password change
+  resetPasswordToken   String?
+  resetPasswordExpires DateTime?
+  isSuspended          Boolean   @default(false) // Super-Admin suspension
   suspendedAt        DateTime?
   suspendedReason    String?
   isActive           Boolean   @default(true)
@@ -616,5 +618,22 @@ model AuditLog {
   @@index([timestamp])
   @@map("audit_logs")
 }
+
+model EmailLog {
+  id          String   @id @default(uuid())
+  to          String
+  subject     String
+  template    String   // "USER_INVITATION", "PASSWORD_RESET", "SECURITY_ALERT", "ORDER_NOTIFICATION", "ADMIN_ALERT"
+  bodyPreview String?  @db.Text
+  status      String   @default("SENT") // "SENT", "DELIVERED", "FAILED"
+  metadata    Json?
+  sentAt      DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  @@index([to, template])
+  @@index([sentAt])
+  @@map("email_logs")
+}
+
 
 
