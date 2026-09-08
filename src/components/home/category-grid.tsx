@@ -7,6 +7,136 @@ import { ArrowRight } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { cn } from "@/lib/utils";
 
+interface CategoryCardItem {
+  id: string;
+  name: string;
+  href: string;
+  badgeEmoji: string;
+  subtitleLine1: string;
+  subtitleLine2: string;
+  imageSrc?: string;
+  svgIcon?: React.ReactNode;
+  borderColor?: string;
+  hoverBorderColor?: string;
+}
+
+const CATEGORY_CARDS: CategoryCardItem[] = [
+  {
+    id: "summer-dress",
+    name: "Summer Dress",
+    href: "/category/summer-dress",
+    badgeEmoji: "☀️",
+    subtitleLine1: "Light. Breathable.",
+    subtitleLine2: "All-Day Comfort.",
+    imageSrc: "/images/shirt.jpg",
+    borderColor: "border-amber-200/80",
+    hoverBorderColor: "hover:border-amber-400",
+  },
+  {
+    id: "winter-dress",
+    name: "Winter Dress",
+    href: "/category/winter-dress",
+    badgeEmoji: "❄️",
+    subtitleLine1: "Warm. Cozy.",
+    subtitleLine2: "Same Great Quality.",
+    imageSrc: "/images/winter-flatlay.jpg",
+    borderColor: "border-sky-200/80",
+    hoverBorderColor: "hover:border-sky-400",
+  },
+  {
+    id: "school-shoes",
+    name: "School Shoes",
+    href: "/category/school-shoes",
+    badgeEmoji: "👟",
+    subtitleLine1: "Durable. Anti-Skid.",
+    subtitleLine2: "Daily Uniform Fit.",
+    imageSrc: "/images/shoes.jpg",
+    borderColor: "border-slate-200/80",
+    hoverBorderColor: "hover:border-slate-400",
+  },
+  {
+    id: "school-bags",
+    name: "School Bags",
+    href: "/category/school-bags",
+    badgeEmoji: "🎒",
+    subtitleLine1: "Spacious. Sturdy.",
+    subtitleLine2: "Ergonomic Straps.",
+    imageSrc: "/images/backpack.jpg",
+    borderColor: "border-indigo-200/80",
+    hoverBorderColor: "hover:border-indigo-400",
+  },
+  {
+    id: "socks-stockings",
+    name: "Socks & Stockings",
+    href: "/category/socks-stockings",
+    badgeEmoji: "🧦",
+    subtitleLine1: "Soft Combed Cotton.",
+    subtitleLine2: "Snug Everyday Fit.",
+    imageSrc: "/images/socks.jpg",
+    borderColor: "border-slate-200/80",
+    hoverBorderColor: "hover:border-slate-400",
+  },
+  {
+    id: "belts-accessories",
+    name: "Belts & Accessories",
+    href: "/category/belts-accessories",
+    badgeEmoji: "👔",
+    subtitleLine1: "Smart Finish.",
+    subtitleLine2: "Official Uniform Fit.",
+    imageSrc: "/images/belt.jpg",
+    borderColor: "border-slate-200/80",
+    hoverBorderColor: "hover:border-slate-400",
+  },
+  {
+    id: "stationery",
+    name: "Stationery",
+    href: "/category/stationery",
+    badgeEmoji: "✏️",
+    subtitleLine1: "Essential Supplies.",
+    subtitleLine2: "Classroom Ready.",
+    imageSrc: "/images/stationery.jpg",
+    borderColor: "border-amber-200/80",
+    hoverBorderColor: "hover:border-amber-400",
+  },
+  {
+    id: "water-bottles",
+    name: "Water Bottles",
+    href: "/category/water-bottles",
+    badgeEmoji: "💧",
+    subtitleLine1: "BPA-Free & Safe.",
+    subtitleLine2: "Leak-Proof Daily.",
+    svgIcon: (
+      <svg viewBox="0 0 64 64" className="h-10 w-10 sm:h-11 sm:w-11 drop-shadow-xs" fill="none">
+        <rect x="23" y="16" width="18" height="40" rx="6" fill="#1D4ED8" />
+        <rect x="26" y="8" width="12" height="9" rx="3" fill="#1E40AF" />
+        <path d="M28 8 C28 4 36 4 36 8" stroke="#0F172A" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+        <rect x="25" y="24" width="14" height="2" rx="1" fill="#60A5FA" />
+        <path d="M29 32 L35 32" stroke="#93C5FD" strokeWidth="2" strokeLinecap="round" />
+      </svg>
+    ),
+    borderColor: "border-blue-200/80",
+    hoverBorderColor: "hover:border-blue-400",
+  },
+  {
+    id: "lunch-boxes",
+    name: "Lunch Boxes",
+    href: "/category/lunch-boxes",
+    badgeEmoji: "🍱",
+    subtitleLine1: "Food Grade Steel.",
+    subtitleLine2: "Fresh & Organized.",
+    svgIcon: (
+      <svg viewBox="0 0 64 64" className="h-10 w-10 sm:h-11 sm:w-11 drop-shadow-xs" fill="none">
+        <rect x="12" y="22" width="40" height="26" rx="6" fill="#1E40AF" />
+        <rect x="10" y="18" width="44" height="8" rx="3" fill="#3B82F6" />
+        <rect x="25" y="20" width="14" height="4" rx="1.5" fill="#FBBF24" />
+        <rect x="20" y="28" width="24" height="14" rx="2" fill="#2563EB" />
+      </svg>
+    ),
+    borderColor: "border-emerald-200/80",
+    hoverBorderColor: "hover:border-emerald-400",
+  },
+];
+
 interface CategoryGridProps {
   className?: string;
 }
@@ -29,197 +159,54 @@ export function CategoryGrid({ className }: CategoryGridProps) {
           </Link>
         </div>
 
-        {/* Categories Row: 2 Featured Cards on Left + 7 Circular Categories on Right */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-9 gap-3 sm:gap-3.5 items-stretch">
-          {/* 1. Summer Dress Featured Card */}
-          <Link
-            href="/category/summer-dress"
-            className="group col-span-1 rounded-2xl bg-white border border-amber-200/80 p-3 flex flex-col justify-between shadow-xs hover:border-amber-400 hover:shadow-sm transition-all text-center"
-          >
-            <div className="relative aspect-square w-full rounded-full bg-[#F3F4F6] flex items-center justify-center p-2 mb-2">
-              <span className="absolute top-0 right-0 text-base select-none">☀️</span>
-              <div className="relative w-full h-full">
-                <Image
-                  src="/images/shirt.jpg"
-                  alt="Summer Dress"
-                  fill
-                  className="object-contain p-1 group-hover:scale-105 transition-transform"
-                  sizes="120px"
-                />
+        {/* Unified Category Cards Grid: Applied across all 9 items */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-9 gap-2.5 sm:gap-3 lg:gap-3.5 items-stretch">
+          {CATEGORY_CARDS.map((cat) => (
+            <Link
+              key={cat.id}
+              href={cat.href}
+              className={cn(
+                "group col-span-1 rounded-2xl bg-white border p-2.5 sm:p-3 flex flex-col justify-between shadow-xs hover:shadow-sm transition-all text-center",
+                cat.borderColor || "border-slate-200/80",
+                cat.hoverBorderColor || "hover:border-slate-400"
+              )}
+            >
+              {/* Circular Product / Icon Container */}
+              <div className="relative aspect-square w-full rounded-full bg-[#F3F4F6] flex items-center justify-center p-2 mb-2">
+                <span className="absolute top-0 right-0 text-sm sm:text-base select-none">
+                  {cat.badgeEmoji}
+                </span>
+                <div className="relative w-full h-full flex items-center justify-center">
+                  {cat.imageSrc ? (
+                    <Image
+                      src={cat.imageSrc}
+                      alt={cat.name}
+                      fill
+                      className="object-contain p-1 group-hover:scale-105 transition-transform"
+                      sizes="(max-width: 640px) 45vw, (max-width: 1024px) 20vw, 120px"
+                    />
+                  ) : (
+                    cat.svgIcon
+                  )}
+                </div>
               </div>
-            </div>
 
-            <div>
-              <h3 className="text-xs sm:text-[13px] font-black text-brand-navy-950 leading-tight">
-                Summer Dress
-              </h3>
-              <p className="text-[10px] sm:text-[10.5px] font-semibold text-slate-500 mt-1 leading-tight">
-                Light. Breathable.<br />All-Day Comfort.
-              </p>
-            </div>
-          </Link>
-
-          {/* 2. Winter Dress Featured Card */}
-          <Link
-            href="/category/winter-dress"
-            className="group col-span-1 rounded-2xl bg-white border border-sky-200/80 p-3 flex flex-col justify-between shadow-xs hover:border-sky-400 hover:shadow-sm transition-all text-center"
-          >
-            <div className="relative aspect-square w-full rounded-full bg-[#F3F4F6] flex items-center justify-center p-2 mb-2">
-              <span className="absolute top-0 right-0 text-base select-none">❄️</span>
-              <div className="relative w-full h-full">
-                <Image
-                  src="/images/winter-flatlay.jpg"
-                  alt="Winter Dress"
-                  fill
-                  className="object-contain p-1 group-hover:scale-105 transition-transform"
-                  sizes="120px"
-                />
+              {/* Title & 2-Line Value Subtitle */}
+              <div>
+                <h3 className="text-xs sm:text-[12.5px] lg:text-[13px] font-black text-brand-navy-950 leading-tight">
+                  {cat.name}
+                </h3>
+                <p className="text-[9.5px] sm:text-[10px] lg:text-[10.5px] font-semibold text-slate-500 mt-1 leading-tight">
+                  {cat.subtitleLine1}
+                  <br />
+                  {cat.subtitleLine2}
+                </p>
               </div>
-            </div>
-
-            <div>
-              <h3 className="text-xs sm:text-[13px] font-black text-brand-navy-950 leading-tight">
-                Winter Dress
-              </h3>
-              <p className="text-[10px] sm:text-[10.5px] font-semibold text-slate-500 mt-1 leading-tight">
-                Warm. Cozy.<br />Same Great Quality.
-              </p>
-            </div>
-          </Link>
-
-          {/* 3. Circular: School Shoes */}
-          <Link
-            href="/category/school-shoes"
-            className="group col-span-1 flex flex-col items-center justify-between p-2 text-center"
-          >
-            <div className="relative aspect-square w-full max-w-[84px] sm:max-w-[96px] rounded-full bg-[#F3F4F6] flex items-center justify-center p-2 shadow-xs group-hover:scale-105 transition-transform">
-              <Image
-                src="/images/shoes.jpg"
-                alt="School Shoes"
-                fill
-                className="object-contain p-2"
-                sizes="96px"
-              />
-            </div>
-            <span className="text-[11px] sm:text-xs font-bold text-brand-navy-950 group-hover:text-brand-navy-800 transition-colors mt-2 leading-tight">
-              School Shoes
-            </span>
-          </Link>
-
-          {/* 4. Circular: School Bags */}
-          <Link
-            href="/category/school-bags"
-            className="group col-span-1 flex flex-col items-center justify-between p-2 text-center"
-          >
-            <div className="relative aspect-square w-full max-w-[84px] sm:max-w-[96px] rounded-full bg-[#F3F4F6] flex items-center justify-center p-2 shadow-xs group-hover:scale-105 transition-transform">
-              <Image
-                src="/images/backpack.jpg"
-                alt="School Bags"
-                fill
-                className="object-contain p-2"
-                sizes="96px"
-              />
-            </div>
-            <span className="text-[11px] sm:text-xs font-bold text-brand-navy-950 group-hover:text-brand-navy-800 transition-colors mt-2 leading-tight">
-              School Bags
-            </span>
-          </Link>
-
-          {/* 5. Circular: Socks & Stockings */}
-          <Link
-            href="/category/socks-stockings"
-            className="group col-span-1 flex flex-col items-center justify-between p-2 text-center"
-          >
-            <div className="relative aspect-square w-full max-w-[84px] sm:max-w-[96px] rounded-full bg-[#F3F4F6] flex items-center justify-center p-2 shadow-xs group-hover:scale-105 transition-transform">
-              <Image
-                src="/images/socks.jpg"
-                alt="Socks & Stockings"
-                fill
-                className="object-contain p-2"
-                sizes="96px"
-              />
-            </div>
-            <span className="text-[11px] sm:text-xs font-bold text-brand-navy-950 group-hover:text-brand-navy-800 transition-colors mt-2 leading-tight">
-              Socks &amp; Stockings
-            </span>
-          </Link>
-
-          {/* 6. Circular: Belts & Accessories */}
-          <Link
-            href="/category/belts-accessories"
-            className="group col-span-1 flex flex-col items-center justify-between p-2 text-center"
-          >
-            <div className="relative aspect-square w-full max-w-[84px] sm:max-w-[96px] rounded-full bg-[#F3F4F6] flex items-center justify-center p-2 shadow-xs group-hover:scale-105 transition-transform">
-              <Image
-                src="/images/belt.jpg"
-                alt="Belts & Accessories"
-                fill
-                className="object-contain p-2"
-                sizes="96px"
-              />
-            </div>
-            <span className="text-[11px] sm:text-xs font-bold text-brand-navy-950 group-hover:text-brand-navy-800 transition-colors mt-2 leading-tight">
-              Belts &amp; Accessories
-            </span>
-          </Link>
-
-          {/* 7. Circular: Stationery */}
-          <Link
-            href="/category/stationery"
-            className="group col-span-1 flex flex-col items-center justify-between p-2 text-center"
-          >
-            <div className="relative aspect-square w-full max-w-[84px] sm:max-w-[96px] rounded-full bg-[#F3F4F6] flex items-center justify-center p-2 shadow-xs group-hover:scale-105 transition-transform">
-              <Image
-                src="/images/stationery.jpg"
-                alt="Stationery"
-                fill
-                className="object-contain p-2"
-                sizes="96px"
-              />
-            </div>
-            <span className="text-[11px] sm:text-xs font-bold text-brand-navy-950 group-hover:text-brand-navy-800 transition-colors mt-2 leading-tight">
-              Stationery
-            </span>
-          </Link>
-
-          {/* 8. Circular: Water Bottles */}
-          <Link
-            href="/category/water-bottles"
-            className="group col-span-1 flex flex-col items-center justify-between p-2 text-center"
-          >
-            <div className="relative aspect-square w-full max-w-[84px] sm:max-w-[96px] rounded-full bg-[#F3F4F6] flex items-center justify-center p-2 shadow-xs group-hover:scale-105 transition-transform">
-              <svg viewBox="0 0 64 64" className="h-11 w-11 sm:h-12 sm:w-12 drop-shadow-xs" fill="none">
-                <rect x="23" y="16" width="18" height="40" rx="6" fill="#1D4ED8" />
-                <rect x="26" y="8" width="12" height="9" rx="3" fill="#1E40AF" />
-                <path d="M28 8 C28 4 36 4 36 8" stroke="#0F172A" strokeWidth="2.5" strokeLinecap="round" fill="none" />
-                <rect x="25" y="24" width="14" height="2" rx="1" fill="#60A5FA" />
-                <path d="M29 32 L35 32" stroke="#93C5FD" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-            </div>
-            <span className="text-[11px] sm:text-xs font-bold text-brand-navy-950 group-hover:text-brand-navy-800 transition-colors mt-2 leading-tight">
-              Water Bottles
-            </span>
-          </Link>
-
-          {/* 9. Circular: Lunch Boxes */}
-          <Link
-            href="/category/lunch-boxes"
-            className="group col-span-1 flex flex-col items-center justify-between p-2 text-center"
-          >
-            <div className="relative aspect-square w-full max-w-[84px] sm:max-w-[96px] rounded-full bg-[#F3F4F6] flex items-center justify-center p-2 shadow-xs group-hover:scale-105 transition-transform">
-              <svg viewBox="0 0 64 64" className="h-11 w-11 sm:h-12 sm:w-12 drop-shadow-xs" fill="none">
-                <rect x="12" y="22" width="40" height="26" rx="6" fill="#1E40AF" />
-                <rect x="10" y="18" width="44" height="8" rx="3" fill="#3B82F6" />
-                <rect x="25" y="20" width="14" height="4" rx="1.5" fill="#FBBF24" />
-                <rect x="20" y="28" width="24" height="14" rx="2" fill="#2563EB" />
-              </svg>
-            </div>
-            <span className="text-[11px] sm:text-xs font-bold text-brand-navy-950 group-hover:text-brand-navy-800 transition-colors mt-2 leading-tight">
-              Lunch Boxes
-            </span>
-          </Link>
+            </Link>
+          ))}
         </div>
       </Container>
     </section>
   );
 }
+
