@@ -33,6 +33,8 @@ import {
   Flame,
   Palette,
   Check,
+  Users,
+  Clock,
 } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import {
@@ -61,7 +63,7 @@ import { TrustBar } from "@/components/home/trust-bar";
 import { PromoCombos } from "@/components/home/promo-combos";
 import { TrustFooterBadges } from "@/components/home/trust-footer-badges";
 
-// Dedicated Reusable Image Upload & Path Component
+// Dedicated Reusable Image Upload & Path Component with Beige Theme
 interface ImageUploadFieldProps {
   label: string;
   value: string;
@@ -117,7 +119,7 @@ function ImageUploadField({
 
   return (
     <div className="space-y-1.5">
-      <label className="font-bold text-slate-700 flex items-center justify-between text-xs">
+      <label className="font-bold text-stone-700 flex items-center justify-between text-xs">
         <span>{label}</span>
         {value && (
           <span className="text-[10px] text-emerald-600 font-semibold flex items-center gap-1">
@@ -128,7 +130,7 @@ function ImageUploadField({
 
       <div className="flex items-center gap-2">
         {/* Photo Thumbnail Preview */}
-        <div className="relative h-10 w-10 shrink-0 rounded-lg border border-slate-200 bg-slate-100 overflow-hidden flex items-center justify-center">
+        <div className="relative h-10 w-10 shrink-0 rounded-xl border border-[#E5DCD3] bg-[#FAF7F2] overflow-hidden flex items-center justify-center">
           {value ? (
             <Image
               src={value}
@@ -140,7 +142,7 @@ function ImageUploadField({
               }}
             />
           ) : (
-            <ImageIcon className="h-4 w-4 text-slate-400" />
+            <ImageIcon className="h-4 w-4 text-stone-400" />
           )}
         </div>
 
@@ -150,7 +152,7 @@ function ImageUploadField({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-900 font-medium focus:border-brand-navy-900 focus:bg-white focus:outline-none"
+          className="flex-1 rounded-xl border border-[#E5DCD3] bg-[#FAF7F2] px-3 py-2 text-xs text-[#1C1917] font-medium focus:border-[#1C1917] focus:bg-white focus:outline-none"
         />
 
         {/* File Upload Button */}
@@ -166,12 +168,12 @@ function ImageUploadField({
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={isUploading}
-          className="inline-flex items-center gap-1.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 px-3 py-2 text-xs font-bold transition-colors shrink-0 disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-xl bg-[#E5DCD3] hover:bg-[#D5C6B4] text-[#1C1917] px-3 py-2 text-xs font-bold transition-colors shrink-0 disabled:opacity-50"
           title="Upload image from computer"
         >
           {isUploading ? (
             <>
-              <Loader2 className="h-3.5 w-3.5 animate-spin text-brand-navy-950" />
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-[#1C1917]" />
               <span className="hidden sm:inline">Uploading...</span>
             </>
           ) : (
@@ -387,7 +389,7 @@ export default function AdminHomepageCMS() {
     toast.info("Category card removed");
   };
 
-  // --- CRUD: PROMO SPLIT CARDS (Summer / Winter Promos) ---
+  // --- CRUD: PROMO SPLIT CARDS ---
   const addPromoSplitCard = () => {
     const newCard: DynamicPromoSplitCard = {
       id: `promo-split-${Date.now()}`,
@@ -489,38 +491,38 @@ export default function AdminHomepageCMS() {
   // Auth Gate
   if (!isAuthorized) {
     return (
-      <div className="min-h-[80vh] flex items-center justify-center p-4 bg-slate-50">
-        <div className="max-w-md w-full rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-card text-center space-y-5">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-navy-950 text-white shadow-md">
+      <div className="min-h-screen flex items-center justify-center p-4 bg-[#FAF7F2]">
+        <div className="max-w-md w-full rounded-3xl border border-[#E5DCD3] bg-white p-6 sm:p-8 shadow-sm text-center space-y-5">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#1C1917] text-white shadow-md">
             <Shield className="h-7 w-7 text-amber-400" />
           </div>
 
           <div className="space-y-1.5">
-            <h1 className="font-display text-2xl font-black text-brand-navy-950">
+            <h1 className="font-display text-2xl font-black text-[#1C1917]">
               Super-Admin CMS Portal
             </h1>
-            <p className="text-xs text-slate-500 font-medium">
+            <p className="text-xs text-stone-600 font-medium">
               Enter your Super-Admin Secret Key to configure dynamic homepage content, upload photos, and manage live cards.
             </p>
           </div>
 
           <div className="space-y-3 pt-2">
             <div className="relative">
-              <Key className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Key className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
               <input
                 type="password"
                 placeholder="Enter Super-Admin Key..."
                 value={adminKey}
                 onChange={(e) => setAdminKey(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && verifyAndLoad()}
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 pl-10 pr-4 py-3 text-sm text-slate-900 font-medium focus:border-brand-navy-950 focus:bg-white focus:outline-none"
+                className="w-full rounded-2xl border border-[#E5DCD3] bg-[#FAF7F2] pl-10 pr-4 py-3 text-sm text-[#1C1917] font-medium focus:border-[#1C1917] focus:bg-white focus:outline-none"
               />
             </div>
 
             <button
               onClick={() => verifyAndLoad()}
               disabled={isLoading}
-              className="w-full rounded-2xl bg-brand-navy-950 py-3 text-sm font-black text-white hover:bg-brand-navy-800 transition-colors flex items-center justify-center gap-2 shadow-sm disabled:opacity-50"
+              className="w-full rounded-2xl bg-[#1C1917] py-3 text-sm font-black text-white hover:bg-stone-800 transition-colors flex items-center justify-center gap-2 shadow-sm disabled:opacity-50"
             >
               {isLoading ? (
                 <>
@@ -541,34 +543,51 @@ export default function AdminHomepageCMS() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 pb-16">
-      {/* Top Admin Bar */}
-      <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur-md px-4 sm:px-6 py-3 shadow-xs">
+    <div className="min-h-screen bg-[#FAF7F2] text-[#1C1917] pb-16">
+      {/* Top Beige Admin Navigation Bar */}
+      <header className="sticky top-0 z-50 border-b border-[#E5DCD3] bg-[#FAF7F2]/95 backdrop-blur-md px-4 sm:px-6 py-3 shadow-2xs">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-navy-950 text-white font-black text-sm">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#1C1917] text-white font-black text-sm shadow-xs">
               TB
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-display text-base font-black text-brand-navy-950">
+                <span className="font-display text-base font-black text-[#1C1917]">
                   TirupatiBalajee CMS
                 </span>
-                <span className="rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-black text-amber-800 uppercase">
+                <span className="rounded-md bg-amber-100/90 border border-amber-300/60 px-1.5 py-0.5 text-[10px] font-black text-amber-900 uppercase">
                   Super Admin
                 </span>
               </div>
-              <p className="text-[11px] text-slate-500 font-semibold">
+              <p className="text-[11px] text-stone-500 font-semibold">
                 Dynamic Homepage & Full Live Preview
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
+            {/* Quick Navigation Between Admin Modules */}
+            <Link
+              href="/admin/users"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-[#E5DCD3] bg-white px-3 py-2 text-xs font-bold text-stone-700 hover:bg-[#F5EFEB] transition-colors shadow-2xs"
+            >
+              <Users className="h-3.5 w-3.5" />
+              <span>Users & RBAC</span>
+            </Link>
+
+            <Link
+              href="/admin/audit-logs"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-[#E5DCD3] bg-white px-3 py-2 text-xs font-bold text-stone-700 hover:bg-[#F5EFEB] transition-colors shadow-2xs"
+            >
+              <Clock className="h-3.5 w-3.5" />
+              <span>Audit Logs</span>
+            </Link>
+
             <Link
               href="/"
               target="_blank"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-[#E5DCD3] bg-white px-3 py-2 text-xs font-bold text-stone-700 hover:bg-[#F5EFEB] transition-colors shadow-2xs"
             >
               <ExternalLink className="h-3.5 w-3.5" />
               <span>Live Site</span>
@@ -576,7 +595,7 @@ export default function AdminHomepageCMS() {
 
             <button
               onClick={handleResetDefaults}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:bg-rose-50 hover:text-rose-700 transition-colors shadow-2xs"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-[#E5DCD3] bg-white px-3 py-2 text-xs font-bold text-stone-700 hover:bg-rose-50 hover:text-rose-700 transition-colors shadow-2xs"
             >
               <RotateCcw className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Reset Defaults</span>
@@ -585,7 +604,7 @@ export default function AdminHomepageCMS() {
             <button
               onClick={handleSaveAll}
               disabled={isSaving}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-brand-navy-950 px-4 py-2 text-xs font-black text-white hover:bg-brand-navy-800 transition-colors shadow-sm disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-[#1C1917] px-4 py-2 text-xs font-black text-white hover:bg-stone-800 transition-colors shadow-sm disabled:opacity-50"
             >
               {isSaving ? (
                 <>
@@ -606,13 +625,13 @@ export default function AdminHomepageCMS() {
       {/* Main CMS Layout */}
       <Container size="xl" className="mt-4 sm:mt-6">
         {/* Navigation Tabs */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-2 border-b border-slate-200 scrollbar-none">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-2 border-b border-[#E5DCD3] scrollbar-none">
           <button
             onClick={() => setActiveTab("categories")}
             className={`flex items-center gap-2 rounded-2xl px-3.5 py-2.5 text-xs font-black transition-all shrink-0 ${
               activeTab === "categories"
-                ? "bg-brand-navy-950 text-white shadow-xs"
-                : "bg-white text-slate-600 hover:bg-slate-200/70"
+                ? "bg-[#1C1917] text-white shadow-xs"
+                : "bg-white text-stone-600 border border-[#E5DCD3] hover:bg-[#F5EFEB]"
             }`}
           >
             <Layout className="h-3.5 w-3.5" />
@@ -623,8 +642,8 @@ export default function AdminHomepageCMS() {
             onClick={() => setActiveTab("hero")}
             className={`flex items-center gap-2 rounded-2xl px-3.5 py-2.5 text-xs font-black transition-all shrink-0 ${
               activeTab === "hero"
-                ? "bg-brand-navy-950 text-white shadow-xs"
-                : "bg-white text-slate-600 hover:bg-slate-200/70"
+                ? "bg-[#1C1917] text-white shadow-xs"
+                : "bg-white text-stone-600 border border-[#E5DCD3] hover:bg-[#F5EFEB]"
             }`}
           >
             <Sliders className="h-3.5 w-3.5" />
@@ -635,8 +654,8 @@ export default function AdminHomepageCMS() {
             onClick={() => setActiveTab("promos")}
             className={`flex items-center gap-2 rounded-2xl px-3.5 py-2.5 text-xs font-black transition-all shrink-0 ${
               activeTab === "promos"
-                ? "bg-brand-navy-950 text-white shadow-xs"
-                : "bg-white text-slate-600 hover:bg-slate-200/70"
+                ? "bg-[#1C1917] text-white shadow-xs"
+                : "bg-white text-stone-600 border border-[#E5DCD3] hover:bg-[#F5EFEB]"
             }`}
           >
             <Sparkles className="h-3.5 w-3.5" />
@@ -647,8 +666,8 @@ export default function AdminHomepageCMS() {
             onClick={() => setActiveTab("combos")}
             className={`flex items-center gap-2 rounded-2xl px-3.5 py-2.5 text-xs font-black transition-all shrink-0 ${
               activeTab === "combos"
-                ? "bg-brand-navy-950 text-white shadow-xs"
-                : "bg-white text-slate-600 hover:bg-slate-200/70"
+                ? "bg-[#1C1917] text-white shadow-xs"
+                : "bg-white text-stone-600 border border-[#E5DCD3] hover:bg-[#F5EFEB]"
             }`}
           >
             <Layers className="h-3.5 w-3.5" />
@@ -659,8 +678,8 @@ export default function AdminHomepageCMS() {
             onClick={() => setActiveTab("trending")}
             className={`flex items-center gap-2 rounded-2xl px-3.5 py-2.5 text-xs font-black transition-all shrink-0 ${
               activeTab === "trending"
-                ? "bg-brand-navy-950 text-white shadow-xs"
-                : "bg-white text-slate-600 hover:bg-slate-200/70"
+                ? "bg-[#1C1917] text-white shadow-xs"
+                : "bg-white text-stone-600 border border-[#E5DCD3] hover:bg-[#F5EFEB]"
             }`}
           >
             <ShoppingBag className="h-3.5 w-3.5" />
@@ -672,7 +691,7 @@ export default function AdminHomepageCMS() {
             className={`flex items-center gap-2 rounded-2xl px-4 py-2.5 text-xs font-black transition-all shrink-0 ml-auto ${
               activeTab === "preview"
                 ? "bg-emerald-600 text-white shadow-sm"
-                : "bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100"
+                : "bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100"
             }`}
           >
             <Eye className="h-3.5 w-3.5" />
@@ -683,18 +702,18 @@ export default function AdminHomepageCMS() {
         {/* Tab 1: Category Cards CRUD */}
         {activeTab === "categories" && (
           <div className="mt-4 space-y-4">
-            <div className="flex items-center justify-between bg-white p-4 rounded-2xl border border-slate-200">
+            <div className="flex items-center justify-between bg-white p-4 rounded-3xl border border-[#E5DCD3] shadow-xs">
               <div>
-                <h2 className="text-base font-black text-brand-navy-950">
+                <h2 className="text-base font-black text-[#1C1917]">
                   Shop By Category Cards (CRUD)
                 </h2>
-                <p className="text-xs text-slate-500 font-medium">
+                <p className="text-xs text-stone-500 font-medium">
                   Create, edit, reorder, delete, and upload photos for category navigation cards.
                 </p>
               </div>
               <button
                 onClick={addCategoryCard}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-brand-navy-950 text-white px-3.5 py-2 text-xs font-bold hover:bg-brand-navy-800 transition-colors shadow-2xs"
+                className="inline-flex items-center gap-1.5 rounded-2xl bg-[#1C1917] text-white px-3.5 py-2 text-xs font-bold hover:bg-stone-800 transition-colors shadow-2xs"
               >
                 <Plus className="h-3.5 w-3.5" />
                 <span>Add Category Card</span>
@@ -705,13 +724,13 @@ export default function AdminHomepageCMS() {
               {categoryCards.map((card, idx) => (
                 <div
                   key={card.id}
-                  className="rounded-3xl border border-slate-200 bg-white p-4 sm:p-5 shadow-card space-y-4 relative flex flex-col justify-between"
+                  className="rounded-3xl border border-[#E5DCD3] bg-white p-4 sm:p-5 shadow-xs space-y-4 relative flex flex-col justify-between"
                 >
                   <div className="space-y-3">
                     {/* Header with order and action buttons */}
-                    <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                    <div className="flex items-center justify-between border-b border-[#E5DCD3] pb-2.5">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-black bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md">
+                        <span className="text-xs font-black bg-[#FAF7F2] text-stone-700 px-2 py-0.5 rounded-md border border-[#E5DCD3]">
                           #{idx + 1}
                         </span>
                         <input
@@ -720,7 +739,7 @@ export default function AdminHomepageCMS() {
                           onChange={(e) =>
                             updateCategoryCard(idx, { name: e.target.value })
                           }
-                          className="font-bold text-sm text-slate-900 border-b border-transparent hover:border-slate-300 focus:border-brand-navy-950 focus:outline-none"
+                          className="font-bold text-sm text-[#1C1917] border-b border-transparent hover:border-stone-300 focus:border-[#1C1917] focus:outline-none"
                           placeholder="Category Title"
                         />
                       </div>
@@ -730,7 +749,7 @@ export default function AdminHomepageCMS() {
                           onClick={() => moveItemUp(categoryCards, idx, setCategoryCards)}
                           disabled={idx === 0}
                           title="Move up"
-                          className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30"
+                          className="p-1 text-stone-400 hover:text-stone-700 disabled:opacity-30"
                         >
                           <ArrowUp className="h-3.5 w-3.5" />
                         </button>
@@ -738,7 +757,7 @@ export default function AdminHomepageCMS() {
                           onClick={() => moveItemDown(categoryCards, idx, setCategoryCards)}
                           disabled={idx === categoryCards.length - 1}
                           title="Move down"
-                          className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30"
+                          className="p-1 text-stone-400 hover:text-stone-700 disabled:opacity-30"
                         >
                           <ArrowDown className="h-3.5 w-3.5" />
                         </button>
@@ -763,26 +782,26 @@ export default function AdminHomepageCMS() {
                     {/* Badge Emoji and Link */}
                     <div className="grid grid-cols-3 gap-2">
                       <div className="col-span-1 space-y-1">
-                        <label className="text-[11px] font-bold text-slate-600">Emoji</label>
+                        <label className="text-[11px] font-bold text-stone-600">Emoji</label>
                         <input
                           type="text"
                           value={card.badgeEmoji || ""}
                           onChange={(e) =>
                             updateCategoryCard(idx, { badgeEmoji: e.target.value })
                           }
-                          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs text-center font-bold"
+                          className="w-full rounded-xl border border-[#E5DCD3] bg-[#FAF7F2] px-2.5 py-1.5 text-xs text-center font-bold"
                           placeholder="☀️"
                         />
                       </div>
                       <div className="col-span-2 space-y-1">
-                        <label className="text-[11px] font-bold text-slate-600">Link URL</label>
+                        <label className="text-[11px] font-bold text-stone-600">Link URL</label>
                         <input
                           type="text"
                           value={card.href || ""}
                           onChange={(e) =>
                             updateCategoryCard(idx, { href: e.target.value })
                           }
-                          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-medium"
+                          className="w-full rounded-xl border border-[#E5DCD3] bg-[#FAF7F2] px-2.5 py-1.5 text-xs font-medium"
                           placeholder="/category/..."
                         />
                       </div>
@@ -790,7 +809,7 @@ export default function AdminHomepageCMS() {
 
                     {/* Subtitle Lines */}
                     <div className="space-y-1.5">
-                      <label className="text-[11px] font-bold text-slate-600">
+                      <label className="text-[11px] font-bold text-stone-600">
                         Subtitle Text Lines
                       </label>
                       <input
@@ -799,7 +818,7 @@ export default function AdminHomepageCMS() {
                         onChange={(e) =>
                           updateCategoryCard(idx, { subtitleLine1: e.target.value })
                         }
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-medium"
+                        className="w-full rounded-xl border border-[#E5DCD3] bg-[#FAF7F2] px-2.5 py-1.5 text-xs font-medium"
                         placeholder="Line 1: Light. Breathable."
                       />
                       <input
@@ -808,14 +827,14 @@ export default function AdminHomepageCMS() {
                         onChange={(e) =>
                           updateCategoryCard(idx, { subtitleLine2: e.target.value })
                         }
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-medium"
+                        className="w-full rounded-xl border border-[#E5DCD3] bg-[#FAF7F2] px-2.5 py-1.5 text-xs font-medium"
                         placeholder="Line 2: All-Day Comfort."
                       />
                     </div>
                   </div>
 
                   {/* Active status */}
-                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+                  <div className="pt-2 border-t border-[#E5DCD3] flex items-center justify-between text-xs">
                     <label className="flex items-center gap-1.5 cursor-pointer">
                       <input
                         type="checkbox"
@@ -823,9 +842,9 @@ export default function AdminHomepageCMS() {
                         onChange={(e) =>
                           updateCategoryCard(idx, { isActive: e.target.checked })
                         }
-                        className="rounded text-brand-navy-950"
+                        className="rounded text-[#1C1917]"
                       />
-                      <span className="font-bold text-slate-700">Card Active</span>
+                      <span className="font-bold text-stone-700">Card Active</span>
                     </label>
                   </div>
                 </div>
@@ -837,18 +856,18 @@ export default function AdminHomepageCMS() {
         {/* Tab 2: Hero Carousel CRUD */}
         {activeTab === "hero" && (
           <div className="mt-4 space-y-4">
-            <div className="flex items-center justify-between bg-white p-4 rounded-2xl border border-slate-200">
+            <div className="flex items-center justify-between bg-white p-4 rounded-3xl border border-[#E5DCD3] shadow-xs">
               <div>
-                <h2 className="text-base font-black text-brand-navy-950">
+                <h2 className="text-base font-black text-[#1C1917]">
                   Hero Slides Carousel (CRUD)
                 </h2>
-                <p className="text-xs text-slate-500 font-medium">
+                <p className="text-xs text-stone-500 font-medium">
                   Add, edit, reorder, and upload photos for top hero slides.
                 </p>
               </div>
               <button
                 onClick={addHeroSlide}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-brand-navy-950 text-white px-3.5 py-2 text-xs font-bold hover:bg-brand-navy-800 transition-colors shadow-2xs"
+                className="inline-flex items-center gap-1.5 rounded-2xl bg-[#1C1917] text-white px-3.5 py-2 text-xs font-bold hover:bg-stone-800 transition-colors shadow-2xs"
               >
                 <Plus className="h-3.5 w-3.5" />
                 <span>Add Hero Slide</span>
@@ -859,14 +878,14 @@ export default function AdminHomepageCMS() {
               {heroSlides.map((slide, idx) => (
                 <div
                   key={slide.id}
-                  className="rounded-3xl border border-slate-200 bg-white p-5 shadow-card space-y-4"
+                  className="rounded-3xl border border-[#E5DCD3] bg-white p-5 shadow-xs space-y-4"
                 >
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <div className="flex items-center justify-between border-b border-[#E5DCD3] pb-3">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-black bg-brand-navy-950 text-white px-2.5 py-1 rounded-md">
+                      <span className="text-xs font-black bg-[#1C1917] text-white px-2.5 py-1 rounded-md">
                         Slide #{idx + 1}
                       </span>
-                      <span className="font-bold text-sm text-slate-900">
+                      <span className="font-bold text-sm text-[#1C1917]">
                         {slide.titleLine1} {slide.titleLine2}
                       </span>
                     </div>
@@ -875,14 +894,14 @@ export default function AdminHomepageCMS() {
                       <button
                         onClick={() => moveItemUp(heroSlides, idx, setHeroSlides)}
                         disabled={idx === 0}
-                        className="p-1.5 text-slate-400 hover:text-slate-700 disabled:opacity-30"
+                        className="p-1.5 text-stone-400 hover:text-stone-700 disabled:opacity-30"
                       >
                         <ArrowUp className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => moveItemDown(heroSlides, idx, setHeroSlides)}
                         disabled={idx === heroSlides.length - 1}
-                        className="p-1.5 text-slate-400 hover:text-slate-700 disabled:opacity-30"
+                        className="p-1.5 text-stone-400 hover:text-stone-700 disabled:opacity-30"
                       >
                         <ArrowDown className="h-4 w-4" />
                       </button>
@@ -905,43 +924,43 @@ export default function AdminHomepageCMS() {
                       />
 
                       <div className="space-y-1">
-                        <label className="text-xs font-bold text-slate-700">Badge Text</label>
+                        <label className="text-xs font-bold text-stone-700">Badge Text</label>
                         <input
                           type="text"
                           value={slide.badge}
                           onChange={(e) => updateHeroSlide(idx, { badge: e.target.value })}
-                          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-amber-900"
+                          className="w-full rounded-xl border border-[#E5DCD3] bg-[#FAF7F2] px-3 py-2 text-xs font-bold text-amber-900"
                         />
                       </div>
 
                       <div className="grid grid-cols-2 gap-2">
                         <div className="space-y-1">
-                          <label className="text-xs font-bold text-slate-700">Title Line 1</label>
+                          <label className="text-xs font-bold text-stone-700">Title Line 1</label>
                           <input
                             type="text"
                             value={slide.titleLine1}
                             onChange={(e) => updateHeroSlide(idx, { titleLine1: e.target.value })}
-                            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold"
+                            className="w-full rounded-xl border border-[#E5DCD3] bg-[#FAF7F2] px-3 py-2 text-xs font-bold"
                           />
                         </div>
                         <div className="space-y-1">
-                          <label className="text-xs font-bold text-slate-700">Title Line 2</label>
+                          <label className="text-xs font-bold text-stone-700">Title Line 2</label>
                           <input
                             type="text"
                             value={slide.titleLine2}
                             onChange={(e) => updateHeroSlide(idx, { titleLine2: e.target.value })}
-                            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold"
+                            className="w-full rounded-xl border border-[#E5DCD3] bg-[#FAF7F2] px-3 py-2 text-xs font-bold"
                           />
                         </div>
                       </div>
 
                       <div className="space-y-1">
-                        <label className="text-xs font-bold text-slate-700">Subtitle</label>
+                        <label className="text-xs font-bold text-stone-700">Subtitle</label>
                         <input
                           type="text"
                           value={slide.subtitle}
                           onChange={(e) => updateHeroSlide(idx, { subtitle: e.target.value })}
-                          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium"
+                          className="w-full rounded-xl border border-[#E5DCD3] bg-[#FAF7F2] px-3 py-2 text-xs font-medium"
                         />
                       </div>
                     </div>
@@ -949,39 +968,39 @@ export default function AdminHomepageCMS() {
                     <div className="space-y-3">
                       <div className="grid grid-cols-2 gap-2">
                         <div className="space-y-1">
-                          <label className="text-xs font-bold text-slate-700">CTA Button Text</label>
+                          <label className="text-xs font-bold text-stone-700">CTA Button Text</label>
                           <input
                             type="text"
                             value={slide.ctaText}
                             onChange={(e) => updateHeroSlide(idx, { ctaText: e.target.value })}
-                            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold"
+                            className="w-full rounded-xl border border-[#E5DCD3] bg-[#FAF7F2] px-3 py-2 text-xs font-bold"
                           />
                         </div>
                         <div className="space-y-1">
-                          <label className="text-xs font-bold text-slate-700">CTA Button URL</label>
+                          <label className="text-xs font-bold text-stone-700">CTA Button URL</label>
                           <input
                             type="text"
                             value={slide.ctaUrl}
                             onChange={(e) => updateHeroSlide(idx, { ctaUrl: e.target.value })}
-                            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium"
+                            className="w-full rounded-xl border border-[#E5DCD3] bg-[#FAF7F2] px-3 py-2 text-xs font-medium"
                           />
                         </div>
                       </div>
 
                       <div className="space-y-1">
-                        <label className="text-xs font-bold text-slate-700">Doodle Note Text</label>
+                        <label className="text-xs font-bold text-stone-700">Doodle Note Text</label>
                         <input
                           type="text"
                           value={slide.doodleText || ""}
                           onChange={(e) => updateHeroSlide(idx, { doodleText: e.target.value })}
-                          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium font-handwriting"
+                          className="w-full rounded-xl border border-[#E5DCD3] bg-[#FAF7F2] px-3 py-2 text-xs font-medium font-handwriting"
                           placeholder="Same Values Every Season"
                         />
                       </div>
 
                       <div className="grid grid-cols-2 gap-2">
                         <div className="space-y-1">
-                          <label className="text-xs font-bold text-slate-700">Sticky Note Text</label>
+                          <label className="text-xs font-bold text-stone-700">Sticky Note Text</label>
                           <input
                             type="text"
                             value={slide.stickyNote?.text || ""}
@@ -990,11 +1009,11 @@ export default function AdminHomepageCMS() {
                                 stickyNote: { ...slide.stickyNote, text: e.target.value },
                               })
                             }
-                            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold"
+                            className="w-full rounded-xl border border-[#E5DCD3] bg-[#FAF7F2] px-3 py-2 text-xs font-bold"
                           />
                         </div>
                         <div className="space-y-1">
-                          <label className="text-xs font-bold text-slate-700">Sticky Subtext</label>
+                          <label className="text-xs font-bold text-stone-700">Sticky Subtext</label>
                           <input
                             type="text"
                             value={slide.stickyNote?.subtext || ""}
@@ -1006,7 +1025,7 @@ export default function AdminHomepageCMS() {
                                 },
                               })
                             }
-                            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium"
+                            className="w-full rounded-xl border border-[#E5DCD3] bg-[#FAF7F2] px-3 py-2 text-xs font-medium"
                           />
                         </div>
                       </div>
@@ -1018,21 +1037,21 @@ export default function AdminHomepageCMS() {
           </div>
         )}
 
-        {/* Tab 3: Summer & Winter Promos (Split Banners CRUD) */}
+        {/* Tab 3: Summer & Winter Promos */}
         {activeTab === "promos" && (
           <div className="mt-4 space-y-4">
-            <div className="flex items-center justify-between bg-white p-4 rounded-2xl border border-slate-200">
+            <div className="flex items-center justify-between bg-white p-4 rounded-3xl border border-[#E5DCD3] shadow-xs">
               <div>
-                <h2 className="text-base font-black text-brand-navy-950">
+                <h2 className="text-base font-black text-[#1C1917]">
                   Promotional Split Cards (CRUD)
                 </h2>
-                <p className="text-xs text-slate-500 font-medium">
+                <p className="text-xs text-stone-500 font-medium">
                   Create, edit, reorder, delete, and upload photos for promotional split cards.
                 </p>
               </div>
               <button
                 onClick={addPromoSplitCard}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-brand-navy-950 text-white px-3.5 py-2 text-xs font-bold hover:bg-brand-navy-800 transition-colors shadow-2xs"
+                className="inline-flex items-center gap-1.5 rounded-2xl bg-[#1C1917] text-white px-3.5 py-2 text-xs font-bold hover:bg-stone-800 transition-colors shadow-2xs"
               >
                 <Plus className="h-3.5 w-3.5" />
                 <span>Add Promo Card</span>
@@ -1043,28 +1062,28 @@ export default function AdminHomepageCMS() {
               {promoSplitCards.map((card, idx) => (
                 <div
                   key={card.id}
-                  className="rounded-3xl border border-slate-200 bg-white p-5 shadow-card space-y-4"
+                  className="rounded-3xl border border-[#E5DCD3] bg-white p-5 shadow-xs space-y-4"
                 >
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                  <div className="flex items-center justify-between border-b border-[#E5DCD3] pb-2.5">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-black bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md">
+                      <span className="text-xs font-black bg-[#FAF7F2] text-stone-700 px-2 py-0.5 rounded-md border border-[#E5DCD3]">
                         #{idx + 1}
                       </span>
-                      <span className="font-bold text-sm text-slate-900">{card.title}</span>
+                      <span className="font-bold text-sm text-[#1C1917]">{card.title}</span>
                     </div>
 
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => moveItemUp(promoSplitCards, idx, setPromoSplitCards)}
                         disabled={idx === 0}
-                        className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30"
+                        className="p-1 text-stone-400 hover:text-stone-700 disabled:opacity-30"
                       >
                         <ArrowUp className="h-3.5 w-3.5" />
                       </button>
                       <button
                         onClick={() => moveItemDown(promoSplitCards, idx, setPromoSplitCards)}
                         disabled={idx === promoSplitCards.length - 1}
-                        className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30"
+                        className="p-1 text-stone-400 hover:text-stone-700 disabled:opacity-30"
                       >
                         <ArrowDown className="h-3.5 w-3.5" />
                       </button>
@@ -1086,82 +1105,82 @@ export default function AdminHomepageCMS() {
 
                   <div className="grid grid-cols-3 gap-2">
                     <div className="col-span-2 space-y-1">
-                      <label className="text-[11px] font-bold text-slate-600">Card Title</label>
+                      <label className="text-[11px] font-bold text-stone-600">Card Title</label>
                       <input
                         type="text"
                         value={card.title}
                         onChange={(e) => updatePromoSplitCard(idx, { title: e.target.value })}
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-bold"
+                        className="w-full rounded-xl border border-[#E5DCD3] bg-[#FAF7F2] px-2.5 py-1.5 text-xs font-bold"
                       />
                     </div>
                     <div className="col-span-1 space-y-1">
-                      <label className="text-[11px] font-bold text-slate-600">Icon / Emoji</label>
+                      <label className="text-[11px] font-bold text-stone-600">Icon / Emoji</label>
                       <input
                         type="text"
                         value={card.iconEmoji || ""}
                         onChange={(e) => updatePromoSplitCard(idx, { iconEmoji: e.target.value })}
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs text-center font-bold"
+                        className="w-full rounded-xl border border-[#E5DCD3] bg-[#FAF7F2] px-2.5 py-1.5 text-xs text-center font-bold"
                         placeholder="☀️"
                       />
                     </div>
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-slate-600">Subtitle</label>
+                    <label className="text-[11px] font-bold text-stone-600">Subtitle</label>
                     <input
                       type="text"
                       value={card.subtitle}
                       onChange={(e) => updatePromoSplitCard(idx, { subtitle: e.target.value })}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-medium"
+                      className="w-full rounded-xl border border-[#E5DCD3] bg-[#FAF7F2] px-2.5 py-1.5 text-xs font-medium"
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1">
-                      <label className="text-[11px] font-bold text-slate-600">Button Text</label>
+                      <label className="text-[11px] font-bold text-stone-600">Button Text</label>
                       <input
                         type="text"
                         value={card.ctaText}
                         onChange={(e) => updatePromoSplitCard(idx, { ctaText: e.target.value })}
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-bold"
+                        className="w-full rounded-xl border border-[#E5DCD3] bg-[#FAF7F2] px-2.5 py-1.5 text-xs font-bold"
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[11px] font-bold text-slate-600">Button URL</label>
+                      <label className="text-[11px] font-bold text-stone-600">Button URL</label>
                       <input
                         type="text"
                         value={card.ctaUrl}
                         onChange={(e) => updatePromoSplitCard(idx, { ctaUrl: e.target.value })}
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-medium"
+                        className="w-full rounded-xl border border-[#E5DCD3] bg-[#FAF7F2] px-2.5 py-1.5 text-xs font-medium"
                       />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1">
-                      <label className="text-[11px] font-bold text-slate-600">BG Color (HEX)</label>
+                      <label className="text-[11px] font-bold text-stone-600">BG Color (HEX)</label>
                       <div className="flex items-center gap-2">
                         <input
                           type="color"
                           value={card.bgColor || "#FEF4CE"}
                           onChange={(e) => updatePromoSplitCard(idx, { bgColor: e.target.value })}
-                          className="h-8 w-8 rounded-lg cursor-pointer border border-slate-200"
+                          className="h-8 w-8 rounded-lg cursor-pointer border border-[#E5DCD3]"
                         />
                         <input
                           type="text"
                           value={card.bgColor || "#FEF4CE"}
                           onChange={(e) => updatePromoSplitCard(idx, { bgColor: e.target.value })}
-                          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-mono"
+                          className="w-full rounded-xl border border-[#E5DCD3] bg-[#FAF7F2] px-2 py-1 text-xs font-mono"
                         />
                       </div>
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[11px] font-bold text-slate-600">Doodle Note</label>
+                      <label className="text-[11px] font-bold text-stone-600">Doodle Note</label>
                       <input
                         type="text"
                         value={card.doodleText || ""}
                         onChange={(e) => updatePromoSplitCard(idx, { doodleText: e.target.value })}
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-medium font-handwriting"
+                        className="w-full rounded-xl border border-[#E5DCD3] bg-[#FAF7F2] px-2.5 py-1.5 text-xs font-medium font-handwriting"
                         placeholder="Play Learn Grow ♡"
                       />
                     </div>
@@ -1175,18 +1194,18 @@ export default function AdminHomepageCMS() {
         {/* Tab 4: Combos & Thermals CRUD */}
         {activeTab === "combos" && (
           <div className="mt-4 space-y-4">
-            <div className="flex items-center justify-between bg-white p-4 rounded-2xl border border-slate-200">
+            <div className="flex items-center justify-between bg-white p-4 rounded-3xl border border-[#E5DCD3] shadow-xs">
               <div>
-                <h2 className="text-base font-black text-brand-navy-950">
+                <h2 className="text-base font-black text-[#1C1917]">
                   Combos & Thermals Cards (CRUD)
                 </h2>
-                <p className="text-xs text-slate-500 font-medium">
+                <p className="text-xs text-stone-500 font-medium">
                   Create, edit, reorder, delete, and upload photos for combo promo sets.
                 </p>
               </div>
               <button
                 onClick={addPromoComboCard}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-brand-navy-950 text-white px-3.5 py-2 text-xs font-bold hover:bg-brand-navy-800 transition-colors shadow-2xs"
+                className="inline-flex items-center gap-1.5 rounded-2xl bg-[#1C1917] text-white px-3.5 py-2 text-xs font-bold hover:bg-stone-800 transition-colors shadow-2xs"
               >
                 <Plus className="h-3.5 w-3.5" />
                 <span>Add Combo Card</span>
@@ -1197,28 +1216,28 @@ export default function AdminHomepageCMS() {
               {promoComboCards.map((card, idx) => (
                 <div
                   key={card.id}
-                  className="rounded-3xl border border-slate-200 bg-white p-5 shadow-card space-y-4"
+                  className="rounded-3xl border border-[#E5DCD3] bg-white p-5 shadow-xs space-y-4"
                 >
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                  <div className="flex items-center justify-between border-b border-[#E5DCD3] pb-2.5">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-black bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md">
+                      <span className="text-xs font-black bg-[#FAF7F2] text-stone-700 px-2 py-0.5 rounded-md border border-[#E5DCD3]">
                         #{idx + 1}
                       </span>
-                      <span className="font-bold text-sm text-slate-900">{card.title}</span>
+                      <span className="font-bold text-sm text-[#1C1917]">{card.title}</span>
                     </div>
 
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => moveItemUp(promoComboCards, idx, setPromoComboCards)}
                         disabled={idx === 0}
-                        className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30"
+                        className="p-1 text-stone-400 hover:text-stone-700 disabled:opacity-30"
                       >
                         <ArrowUp className="h-3.5 w-3.5" />
                       </button>
                       <button
                         onClick={() => moveItemDown(promoComboCards, idx, setPromoComboCards)}
                         disabled={idx === promoComboCards.length - 1}
-                        className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30"
+                        className="p-1 text-stone-400 hover:text-stone-700 disabled:opacity-30"
                       >
                         <ArrowDown className="h-3.5 w-3.5" />
                       </button>
@@ -1240,77 +1259,77 @@ export default function AdminHomepageCMS() {
 
                   <div className="grid grid-cols-3 gap-2">
                     <div className="col-span-1 space-y-1">
-                      <label className="text-[11px] font-bold text-slate-600">Tag / Badge</label>
+                      <label className="text-[11px] font-bold text-stone-600">Tag / Badge</label>
                       <input
                         type="text"
                         value={card.tag || ""}
                         onChange={(e) => updatePromoComboCard(idx, { tag: e.target.value })}
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-bold"
+                        className="w-full rounded-xl border border-[#E5DCD3] bg-[#FAF7F2] px-2.5 py-1.5 text-xs font-bold"
                         placeholder="BEST VALUE"
                       />
                     </div>
                     <div className="col-span-2 space-y-1">
-                      <label className="text-[11px] font-bold text-slate-600">Card Title</label>
+                      <label className="text-[11px] font-bold text-stone-600">Card Title</label>
                       <input
                         type="text"
                         value={card.title}
                         onChange={(e) => updatePromoComboCard(idx, { title: e.target.value })}
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-bold"
+                        className="w-full rounded-xl border border-[#E5DCD3] bg-[#FAF7F2] px-2.5 py-1.5 text-xs font-bold"
                       />
                     </div>
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-slate-600">Subtitle</label>
+                    <label className="text-[11px] font-bold text-stone-600">Subtitle</label>
                     <input
                       type="text"
                       value={card.subtitle}
                       onChange={(e) => updatePromoComboCard(idx, { subtitle: e.target.value })}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-medium"
+                      className="w-full rounded-xl border border-[#E5DCD3] bg-[#FAF7F2] px-2.5 py-1.5 text-xs font-medium"
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1">
-                      <label className="text-[11px] font-bold text-slate-600">CTA Text</label>
+                      <label className="text-[11px] font-bold text-stone-600">CTA Text</label>
                       <input
                         type="text"
                         value={card.ctaText}
                         onChange={(e) => updatePromoComboCard(idx, { ctaText: e.target.value })}
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-bold"
+                        className="w-full rounded-xl border border-[#E5DCD3] bg-[#FAF7F2] px-2.5 py-1.5 text-xs font-bold"
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[11px] font-bold text-slate-600">CTA URL</label>
+                      <label className="text-[11px] font-bold text-stone-600">CTA URL</label>
                       <input
                         type="text"
                         value={card.ctaUrl}
                         onChange={(e) => updatePromoComboCard(idx, { ctaUrl: e.target.value })}
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-medium"
+                        className="w-full rounded-xl border border-[#E5DCD3] bg-[#FAF7F2] px-2.5 py-1.5 text-xs font-medium"
                       />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1">
-                      <label className="text-[11px] font-bold text-slate-600">Card Tint</label>
+                      <label className="text-[11px] font-bold text-stone-600">Card Tint</label>
                       <div className="flex items-center gap-2">
                         <input
                           type="color"
                           value={card.bgColor || "#E1F1FD"}
                           onChange={(e) => updatePromoComboCard(idx, { bgColor: e.target.value })}
-                          className="h-8 w-8 rounded-lg cursor-pointer border border-slate-200"
+                          className="h-8 w-8 rounded-lg cursor-pointer border border-[#E5DCD3]"
                         />
                         <input
                           type="text"
                           value={card.bgColor || "#E1F1FD"}
                           onChange={(e) => updatePromoComboCard(idx, { bgColor: e.target.value })}
-                          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-mono"
+                          className="w-full rounded-xl border border-[#E5DCD3] bg-[#FAF7F2] px-2 py-1 text-xs font-mono"
                         />
                       </div>
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[11px] font-bold text-slate-600">Photo Position</label>
+                      <label className="text-[11px] font-bold text-stone-600">Photo Position</label>
                       <select
                         value={card.layout || "image-left"}
                         onChange={(e) =>
@@ -1318,7 +1337,7 @@ export default function AdminHomepageCMS() {
                             layout: e.target.value as "image-left" | "image-right",
                           })
                         }
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-semibold"
+                        className="w-full rounded-xl border border-[#E5DCD3] bg-[#FAF7F2] px-2.5 py-1.5 text-xs font-semibold"
                       >
                         <option value="image-left">Photo Left, Text Right</option>
                         <option value="image-right">Text Left, Photo Right</option>
@@ -1334,19 +1353,19 @@ export default function AdminHomepageCMS() {
         {/* Tab 5: Trending Products CRUD */}
         {activeTab === "trending" && (
           <div className="mt-4 space-y-4">
-            <div className="bg-white p-5 rounded-3xl border border-slate-200 space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div className="bg-white p-5 rounded-3xl border border-[#E5DCD3] space-y-4 shadow-xs">
+              <div className="flex items-center justify-between border-b border-[#E5DCD3] pb-3">
                 <div>
-                  <h2 className="text-base font-black text-brand-navy-950">
+                  <h2 className="text-base font-black text-[#1C1917]">
                     Trending Section Settings
                   </h2>
-                  <p className="text-xs text-slate-500 font-medium">
+                  <p className="text-xs text-stone-500 font-medium">
                     Configure the section title, subtitle, and View All link.
                   </p>
                 </div>
                 <button
                   onClick={addTrendingProduct}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-brand-navy-950 text-white px-3.5 py-2 text-xs font-bold hover:bg-brand-navy-800 transition-colors shadow-2xs"
+                  className="inline-flex items-center gap-1.5 rounded-2xl bg-[#1C1917] text-white px-3.5 py-2 text-xs font-bold hover:bg-stone-800 transition-colors shadow-2xs"
                 >
                   <Plus className="h-3.5 w-3.5" />
                   <span>Add Product Card</span>
@@ -1355,36 +1374,36 @@ export default function AdminHomepageCMS() {
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-700">Section Title</label>
+                  <label className="text-xs font-bold text-stone-700">Section Title</label>
                   <input
                     type="text"
                     value={trendingSettings.title}
                     onChange={(e) =>
                       setTrendingSettings({ ...trendingSettings, title: e.target.value })
                     }
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold"
+                    className="w-full rounded-xl border border-[#E5DCD3] bg-[#FAF7F2] px-3 py-2 text-xs font-bold"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-700">Section Subtitle</label>
+                  <label className="text-xs font-bold text-stone-700">Section Subtitle</label>
                   <input
                     type="text"
                     value={trendingSettings.subtitle}
                     onChange={(e) =>
                       setTrendingSettings({ ...trendingSettings, subtitle: e.target.value })
                     }
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium"
+                    className="w-full rounded-xl border border-[#E5DCD3] bg-[#FAF7F2] px-3 py-2 text-xs font-medium"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-700">View All URL</label>
+                  <label className="text-xs font-bold text-stone-700">View All URL</label>
                   <input
                     type="text"
                     value={trendingSettings.viewAllHref}
                     onChange={(e) =>
                       setTrendingSettings({ ...trendingSettings, viewAllHref: e.target.value })
                     }
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium"
+                    className="w-full rounded-xl border border-[#E5DCD3] bg-[#FAF7F2] px-3 py-2 text-xs font-medium"
                   />
                 </div>
               </div>
@@ -1394,12 +1413,12 @@ export default function AdminHomepageCMS() {
               {trendingProducts.map((product, idx) => (
                 <div
                   key={product.id}
-                  className="rounded-3xl border border-slate-200 bg-white p-4 sm:p-5 shadow-card space-y-3.5 relative flex flex-col justify-between"
+                  className="rounded-3xl border border-[#E5DCD3] bg-white p-4 sm:p-5 shadow-xs space-y-3.5 relative flex flex-col justify-between"
                 >
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                    <div className="flex items-center justify-between border-b border-[#E5DCD3] pb-2">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-black bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md">
+                        <span className="text-xs font-black bg-[#FAF7F2] text-stone-700 px-2 py-0.5 rounded-md border border-[#E5DCD3]">
                           #{idx + 1}
                         </span>
                         <input
@@ -1408,7 +1427,7 @@ export default function AdminHomepageCMS() {
                           onChange={(e) =>
                             updateTrendingProduct(idx, { name: e.target.value })
                           }
-                          className="font-bold text-sm text-slate-900 border-b border-transparent hover:border-slate-300 focus:border-brand-navy-950 focus:outline-none"
+                          className="font-bold text-sm text-[#1C1917] border-b border-transparent hover:border-stone-300 focus:border-[#1C1917] focus:outline-none"
                           placeholder="Product Name"
                         />
                       </div>
@@ -1417,14 +1436,14 @@ export default function AdminHomepageCMS() {
                         <button
                           onClick={() => moveItemUp(trendingProducts, idx, setTrendingProducts)}
                           disabled={idx === 0}
-                          className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30"
+                          className="p-1 text-stone-400 hover:text-stone-700 disabled:opacity-30"
                         >
                           <ArrowUp className="h-3.5 w-3.5" />
                         </button>
                         <button
                           onClick={() => moveItemDown(trendingProducts, idx, setTrendingProducts)}
                           disabled={idx === trendingProducts.length - 1}
-                          className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30"
+                          className="p-1 text-stone-400 hover:text-stone-700 disabled:opacity-30"
                         >
                           <ArrowDown className="h-3.5 w-3.5" />
                         </button>
@@ -1446,51 +1465,51 @@ export default function AdminHomepageCMS() {
 
                     <div className="grid grid-cols-2 gap-2">
                       <div className="space-y-1">
-                        <label className="text-[11px] font-bold text-slate-600">Selling Price (₹)</label>
+                        <label className="text-[11px] font-bold text-stone-600">Selling Price (₹)</label>
                         <input
                           type="number"
                           value={product.sellingPrice}
                           onChange={(e) =>
                             updateTrendingProduct(idx, { sellingPrice: Number(e.target.value) })
                           }
-                          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-black text-slate-900"
+                          className="w-full rounded-xl border border-[#E5DCD3] bg-[#FAF7F2] px-2.5 py-1.5 text-xs font-black text-[#1C1917]"
                         />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[11px] font-bold text-slate-600">MRP (₹)</label>
+                        <label className="text-[11px] font-bold text-stone-600">MRP (₹)</label>
                         <input
                           type="number"
                           value={product.mrp}
                           onChange={(e) =>
                             updateTrendingProduct(idx, { mrp: Number(e.target.value) })
                           }
-                          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-medium text-slate-500"
+                          className="w-full rounded-xl border border-[#E5DCD3] bg-[#FAF7F2] px-2.5 py-1.5 text-xs font-medium text-stone-500"
                         />
                       </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-2">
                       <div className="space-y-1">
-                        <label className="text-[11px] font-bold text-slate-600">Discount Badge</label>
+                        <label className="text-[11px] font-bold text-stone-600">Discount Badge</label>
                         <input
                           type="text"
                           value={product.discountBadge || ""}
                           onChange={(e) =>
                             updateTrendingProduct(idx, { discountBadge: e.target.value })
                           }
-                          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-bold text-emerald-700"
+                          className="w-full rounded-xl border border-[#E5DCD3] bg-[#FAF7F2] px-2.5 py-1.5 text-xs font-bold text-emerald-700"
                           placeholder="29% OFF"
                         />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[11px] font-bold text-slate-600">School / Tag</label>
+                        <label className="text-[11px] font-bold text-stone-600">School / Tag</label>
                         <input
                           type="text"
                           value={product.schoolName || ""}
                           onChange={(e) =>
                             updateTrendingProduct(idx, { schoolName: e.target.value })
                           }
-                          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-medium"
+                          className="w-full rounded-xl border border-[#E5DCD3] bg-[#FAF7F2] px-2.5 py-1.5 text-xs font-medium"
                           placeholder="Universal School"
                         />
                       </div>
@@ -1498,7 +1517,7 @@ export default function AdminHomepageCMS() {
 
                     <div className="grid grid-cols-2 gap-2">
                       <div className="space-y-1">
-                        <label className="text-[11px] font-bold text-slate-600">Rating ★</label>
+                        <label className="text-[11px] font-bold text-stone-600">Rating ★</label>
                         <input
                           type="number"
                           step="0.1"
@@ -1508,24 +1527,24 @@ export default function AdminHomepageCMS() {
                           onChange={(e) =>
                             updateTrendingProduct(idx, { rating: Number(e.target.value) })
                           }
-                          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-bold"
+                          className="w-full rounded-xl border border-[#E5DCD3] bg-[#FAF7F2] px-2.5 py-1.5 text-xs font-bold"
                         />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[11px] font-bold text-slate-600">Reviews Count</label>
+                        <label className="text-[11px] font-bold text-stone-600">Reviews Count</label>
                         <input
                           type="number"
                           value={product.reviewCount || 100}
                           onChange={(e) =>
                             updateTrendingProduct(idx, { reviewCount: Number(e.target.value) })
                           }
-                          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-medium"
+                          className="w-full rounded-xl border border-[#E5DCD3] bg-[#FAF7F2] px-2.5 py-1.5 text-xs font-medium"
                         />
                       </div>
                     </div>
                   </div>
 
-                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+                  <div className="pt-2 border-t border-[#E5DCD3] flex items-center justify-between text-xs">
                     <label className="flex items-center gap-1.5 cursor-pointer">
                       <input
                         type="checkbox"
@@ -1533,9 +1552,9 @@ export default function AdminHomepageCMS() {
                         onChange={(e) =>
                           updateTrendingProduct(idx, { isBestseller: e.target.checked })
                         }
-                        className="rounded text-brand-navy-950"
+                        className="rounded text-[#1C1917]"
                       />
-                      <span className="font-bold text-slate-700">Best Seller Badge</span>
+                      <span className="font-bold text-stone-700">Best Seller Badge</span>
                     </label>
 
                     <label className="flex items-center gap-1.5 cursor-pointer">
@@ -1545,9 +1564,9 @@ export default function AdminHomepageCMS() {
                         onChange={(e) =>
                           updateTrendingProduct(idx, { isActive: e.target.checked })
                         }
-                        className="rounded text-brand-navy-950"
+                        className="rounded text-[#1C1917]"
                       />
-                      <span className="font-bold text-slate-700">Active</span>
+                      <span className="font-bold text-stone-700">Active</span>
                     </label>
                   </div>
                 </div>
@@ -1556,22 +1575,22 @@ export default function AdminHomepageCMS() {
           </div>
         )}
 
-        {/* Tab 6: 👁️ LIVE MULTI-DEVICE PREVIEW BEFORE PUBLISHING */}
+        {/* Tab 6: 👁️ LIVE MULTI-DEVICE PREVIEW */}
         {activeTab === "preview" && (
           <div className="mt-4 space-y-4">
             {/* Viewport Toolbar */}
-            <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-3xl border border-slate-200 shadow-xs">
+            <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-3xl border border-[#E5DCD3] shadow-xs">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-black text-brand-navy-950 uppercase tracking-wide">
+                <span className="text-xs font-black text-[#1C1917] uppercase tracking-wide">
                   Live Viewport:
                 </span>
-                <div className="flex items-center rounded-2xl bg-slate-100 p-1">
+                <div className="flex items-center rounded-2xl bg-[#FAF7F2] border border-[#E5DCD3] p-1">
                   <button
                     onClick={() => setPreviewDevice("desktop")}
                     className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all ${
                       previewDevice === "desktop"
-                        ? "bg-white text-brand-navy-950 shadow-xs"
-                        : "text-slate-600 hover:text-slate-900"
+                        ? "bg-[#1C1917] text-white shadow-xs"
+                        : "text-stone-600 hover:text-stone-900"
                     }`}
                   >
                     <Monitor className="h-3.5 w-3.5" />
@@ -1582,8 +1601,8 @@ export default function AdminHomepageCMS() {
                     onClick={() => setPreviewDevice("tablet")}
                     className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all ${
                       previewDevice === "tablet"
-                        ? "bg-white text-brand-navy-950 shadow-xs"
-                        : "text-slate-600 hover:text-slate-900"
+                        ? "bg-[#1C1917] text-white shadow-xs"
+                        : "text-stone-600 hover:text-stone-900"
                     }`}
                   >
                     <Tablet className="h-3.5 w-3.5" />
@@ -1594,8 +1613,8 @@ export default function AdminHomepageCMS() {
                     onClick={() => setPreviewDevice("mobile")}
                     className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all ${
                       previewDevice === "mobile"
-                        ? "bg-white text-brand-navy-950 shadow-xs"
-                        : "text-slate-600 hover:text-slate-900"
+                        ? "bg-[#1C1917] text-white shadow-xs"
+                        : "text-stone-600 hover:text-stone-900"
                     }`}
                   >
                     <Smartphone className="h-3.5 w-3.5" />
@@ -1605,13 +1624,13 @@ export default function AdminHomepageCMS() {
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="text-[11px] font-semibold text-slate-500">
+                <span className="text-[11px] font-semibold text-stone-500">
                   ⚡ Interactive Preview with In-Memory Draft Data
                 </span>
                 <button
                   onClick={handleSaveAll}
                   disabled={isSaving}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-xs font-black transition-colors shadow-xs disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-xs font-black transition-colors shadow-xs disabled:opacity-50"
                 >
                   {isSaving ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -1624,7 +1643,7 @@ export default function AdminHomepageCMS() {
             </div>
 
             {/* Interactive Preview Container */}
-            <div className="flex justify-center p-2 sm:p-4 bg-slate-200/80 rounded-3xl overflow-x-auto">
+            <div className="flex justify-center p-2 sm:p-4 bg-[#EFE8E0] rounded-3xl overflow-x-auto border border-[#E5DCD3]">
               <div
                 style={{
                   width:
@@ -1636,16 +1655,16 @@ export default function AdminHomepageCMS() {
                   maxWidth: "100%",
                   transition: "width 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
                 }}
-                className="bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-300"
+                className="bg-white rounded-2xl shadow-2xl overflow-hidden border border-[#D5C6B4]"
               >
                 {/* Simulated Browser Bar */}
-                <div className="bg-slate-100 px-4 py-2 border-b border-slate-200 flex items-center gap-2">
+                <div className="bg-[#F5EFEB] px-4 py-2 border-b border-[#E5DCD3] flex items-center gap-2">
                   <div className="flex items-center gap-1.5">
                     <span className="h-2.5 w-2.5 rounded-full bg-rose-400" />
                     <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
                     <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
                   </div>
-                  <div className="flex-1 text-center font-mono text-[10px] text-slate-500 bg-white py-1 rounded-md border border-slate-200 mx-2">
+                  <div className="flex-1 text-center font-mono text-[10px] text-stone-500 bg-white py-1 rounded-md border border-[#E5DCD3] mx-2">
                     https://tirupatibalajidresses.com (DRAFT PREVIEW)
                   </div>
                 </div>

@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { assertSuperAdmin } from "@/lib/auth/admin-guard";
 import { successResponse, errorResponse } from "@/lib/api-response";
 import { BadRequestError } from "@/lib/errors";
+import { logAuditEvent } from "@/lib/audit/audit-logger";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 
@@ -20,6 +21,14 @@ export async function POST(req: NextRequest) {
     const directUrl = formData.get("url") as string | null;
 
     if (directUrl) {
+      await logAuditEvent({
+        action: "MEDIA_URL_SET",
+        module: "HOMEPAGE",
+        feature: "MEDIA_UPLOAD",
+        details: { directUrl },
+        req,
+      });
+
       return successResponse(
         { url: directUrl },
         "Media URL registered successfully"
@@ -48,6 +57,15 @@ export async function POST(req: NextRequest) {
     await writeFile(filePath, buffer);
 
     const publicUrl = `/uploads/${filename}`;
+
+    await logAuditEvent({
+      action: "MEDIA_UPLOAD",
+      module: "HOMEPAGE",
+      feature: "MEDIA_UPLOAD",
+      details: { filename, publicUrl, sizeBytes: buffer.length },
+      req,
+    });
+
     return successResponse(
       { url: publicUrl, filename },
       "Photo uploaded successfully"

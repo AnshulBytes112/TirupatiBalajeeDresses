@@ -79,19 +79,28 @@ enum ReviewStatus {
 }
 
 model User {
-  id            String    @id @default(uuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  phone         String?   @unique
-  phoneVerified DateTime?
-  image         String?
-  passwordHash  String?
-  role          Role      @default(CUSTOMER)
-  isActive      Boolean   @default(true)
-  isDeleted     Boolean   @default(false)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id                 String    @id @default(uuid())
+  name               String?
+  username           String?   @unique
+  email              String?   @unique
+  emailVerified      DateTime?
+  phone              String?   @unique
+  phoneVerified      DateTime?
+  image              String?
+  passwordHash       String?
+  role               Role      @default(CUSTOMER)
+  permissions        Json?     // Array of granular module/feature permission strings, e.g. ["HOMEPAGE:READ", "HOMEPAGE:WRITE", "PRODUCTS:CREATE"]
+  mustChangePassword Boolean   @default(false) // Forced first login password change
+  isSuspended        Boolean   @default(false) // Super-Admin suspension
+  suspendedAt        DateTime?
+  suspendedReason    String?
+  isActive           Boolean   @default(true)
+  isDeleted          Boolean   @default(false) // Soft deletion
+  deletedAt          DateTime?
+  lastLoginAt        DateTime?
+  createdBy          String?   // User ID or "SUPER_ADMIN"
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
   addresses  Address[]
   orders     Order[]
@@ -103,6 +112,8 @@ model User {
 
   @@index([email])
   @@index([phone])
+  @@index([username])
+  @@index([role, isActive, isSuspended, isDeleted])
   @@map("users")
 }
 
@@ -583,4 +594,27 @@ model HomepageSection {
   @@index([sectionKey, isActive])
   @@map("homepage_sections")
 }
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  userId      String?
+  userName    String?
+  userEmail   String?
+  userRole    String?
+  action      String   // e.g., "LOGIN", "FIRST_LOGIN_PASSWORD_CHANGE", "PAGE_VISIT", "HOMEPAGE_UPDATE", "HOMEPAGE_PUBLISH", "USER_CREATE", "USER_SUSPEND", "USER_UNSUSPEND", "USER_SOFT_DELETE", "USER_RESTORE"
+  module      String   // e.g., "AUTH", "HOMEPAGE", "USERS", "PRODUCTS", "ORDERS", "SETTINGS"
+  feature     String?  // e.g., "HERO_CAROUSEL", "CATEGORY_CARDS", "PERMISSIONS", "ACCOUNT_STATUS"
+  details     Json?    // Contextual payload or diff details
+  ipAddress   String?
+  userAgent   String?
+  status      String   @default("SUCCESS") // "SUCCESS", "DENIED", "FAILED"
+  timestamp   DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  @@index([userId, timestamp])
+  @@index([module, action, timestamp])
+  @@index([timestamp])
+  @@map("audit_logs")
+}
+
 
