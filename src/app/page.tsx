@@ -73,15 +73,17 @@ export default function HomePage() {
   const [schools, setSchools] = React.useState<any[]>([]);
   const [banners, setBanners] = React.useState<any[]>([]);
   const [trendingProducts, setTrendingProducts] = React.useState<any[]>(MASTER_TRENDING_PRODUCTS);
+  const [dynamicHomepage, setDynamicHomepage] = React.useState<any>(null);
   const [isLoadingTrending, setIsLoadingTrending] = React.useState(false);
 
-  // Initial Load: Fetch dynamic catalog data from backend API
+  // Initial Load: Fetch dynamic catalog & homepage data from backend API
   React.useEffect(() => {
     async function loadCatalog() {
       try {
-        const [schoolRes, bannerRes] = await Promise.all([
+        const [schoolRes, bannerRes, homepageRes] = await Promise.all([
           fetch("/api/schools").catch(() => null),
           fetch("/api/banners").catch(() => null),
+          fetch("/api/homepage").catch(() => null),
         ]);
 
         if (schoolRes?.ok) {
@@ -92,6 +94,10 @@ export default function HomePage() {
           const json = await bannerRes.json();
           if (json.data?.length) setBanners(json.data);
         }
+        if (homepageRes?.ok) {
+          const json = await homepageRes.json();
+          if (json.data) setDynamicHomepage(json.data);
+        }
       } catch (e) {
         console.warn("Loaded catalog with fallback data:", e);
       }
@@ -101,25 +107,31 @@ export default function HomePage() {
   }, []);
 
   const splitBanners = banners.filter((b) => b.position === "PROMO_SPLIT");
-  const summerBanner = splitBanners[0];
-  const winterBanner = splitBanners[1];
+  const summerBanner = dynamicHomepage?.promoSplit?.summerBanner || splitBanners[0];
+  const winterBanner = dynamicHomepage?.promoSplit?.winterBanner || splitBanners[1];
 
   return (
     <div className="min-h-screen pb-4 space-y-3 sm:space-y-4">
-      {/* 1. HERO CAROUSEL: "Uniforms for Every Season" */}
-      <HeroCarousel />
+      {/* 1. HERO CAROUSEL: Dynamic slides or fallback */}
+      <HeroCarousel slides={dynamicHomepage?.heroSlides} />
 
-      {/* 2. CATEGORIES: "Shop School Uniforms" */}
-      <CategoryGrid />
+      {/* 2. CATEGORIES: Dynamic category cards */}
+      <CategoryGrid cards={dynamicHomepage?.categoryCards} />
 
       {/* 3. PROMOTIONAL SPLIT: Stay Cool This Summer & Stay Warm This Winter */}
       <PromoSplit summerBanner={summerBanner} winterBanner={winterBanner} />
 
       {/* 4. PRODUCT GRID: Trending Now */}
       <ProductCarouselSection
-        title="Trending Now"
-        subtitle="Most loved products by parents and students alike"
-        viewAllHref="/products?filter=trending"
+        title={dynamicHomepage?.trendingSettings?.title || "Trending Now"}
+        subtitle={
+          dynamicHomepage?.trendingSettings?.subtitle ||
+          "Most loved products by parents and students alike"
+        }
+        viewAllHref={
+          dynamicHomepage?.trendingSettings?.viewAllHref ||
+          "/products?filter=trending"
+        }
         products={trendingProducts}
         isLoading={isLoadingTrending}
       />
@@ -128,7 +140,10 @@ export default function HomePage() {
       <TrustBar />
 
       {/* 6. PROMO COMBOS: Complete School Look & Thermals Collection */}
-      <PromoCombos />
+      <PromoCombos
+        comboBanner={dynamicHomepage?.promoCombos?.comboBanner}
+        thermalsBanner={dynamicHomepage?.promoCombos?.thermalsBanner}
+      />
 
       {/* 7. BOTTOM TRUST FEATURE BADGES */}
       <TrustFooterBadges />

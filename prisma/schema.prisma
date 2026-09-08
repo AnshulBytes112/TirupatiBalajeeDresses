@@ -10,6 +10,7 @@ datasource db {
 enum Role {
   CUSTOMER
   ADMIN
+  SUPER_ADMIN
   STORE_STAFF
 }
 
@@ -566,3 +567,20 @@ model Banner {
   @@index([position, isActive, isDeleted])
   @@map("banners")
 }
+
+model HomepageSection {
+  id           String   @id @default(uuid())
+  sectionKey   String   @unique // "hero_carousel", "category_grid", "promo_split", "promo_combos", "trending_section", "trust_bar"
+  title        String?
+  subtitle     String?
+  badge        String?
+  content      Json     // JSON storing dynamic slides, cards, images, copy, doodles, badges, CTAs
+  displayOrder Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([sectionKey, isActive])
+  @@map("homepage_sections")
+}
+

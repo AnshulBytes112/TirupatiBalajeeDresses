@@ -138,10 +138,13 @@ const CATEGORY_CARDS: CategoryCardItem[] = [
 ];
 
 interface CategoryGridProps {
+  cards?: CategoryCardItem[];
   className?: string;
 }
 
-export function CategoryGrid({ className }: CategoryGridProps) {
+export function CategoryGrid({ cards, className }: CategoryGridProps) {
+  const activeCards = cards && cards.length > 0 ? cards : CATEGORY_CARDS;
+
   return (
     <section className={cn("pt-4 sm:pt-6", className)}>
       <Container size="xl">
@@ -161,7 +164,7 @@ export function CategoryGrid({ className }: CategoryGridProps) {
 
         {/* Unified Category Cards Grid: Applied across all 9 items */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-9 gap-2.5 sm:gap-3 lg:gap-3.5 items-stretch">
-          {CATEGORY_CARDS.map((cat) => (
+          {activeCards.map((cat) => (
             <Link
               key={cat.id}
               href={cat.href}

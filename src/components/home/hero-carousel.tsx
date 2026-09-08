@@ -80,17 +80,23 @@ const HERO_SLIDES: HeroSlide[] = [
   },
 ];
 
-export function HeroCarousel() {
+export interface HeroCarouselProps {
+  slides?: HeroSlide[];
+  className?: string;
+}
+
+export function HeroCarousel({ slides, className }: HeroCarouselProps) {
+  const activeSlides = slides && slides.length > 0 ? slides : HERO_SLIDES;
   const [currentSlide, setCurrentSlide] = React.useState(0);
   const [isPaused, setIsPaused] = React.useState(false);
 
   const nextSlide = React.useCallback(() => {
-    setCurrentSlide((prev) => (prev + 1) % HERO_SLIDES.length);
-  }, []);
+    setCurrentSlide((prev) => (prev + 1) % activeSlides.length);
+  }, [activeSlides.length]);
 
   const prevSlide = React.useCallback(() => {
-    setCurrentSlide((prev) => (prev - 1 + HERO_SLIDES.length) % HERO_SLIDES.length);
-  }, []);
+    setCurrentSlide((prev) => (prev - 1 + activeSlides.length) % activeSlides.length);
+  }, [activeSlides.length]);
 
   // Auto slide every 3 seconds (3000ms)
   React.useEffect(() => {
@@ -131,7 +137,7 @@ export function HeroCarousel() {
             dragElastic={0.15}
             onDragEnd={handleDragEnd}
           >
-            {HERO_SLIDES.map((slide, idx) => {
+            {activeSlides.map((slide, idx) => {
               const isActive = idx === currentSlide;
 
               return (
@@ -293,7 +299,7 @@ export function HeroCarousel() {
 
           {/* Bottom Pagination Indicator */}
           <div className="absolute bottom-2.5 sm:bottom-3 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 bg-white/80 backdrop-blur-xs px-2.5 py-1 rounded-full border border-slate-200 shadow-xs">
-            {HERO_SLIDES.map((_, idx) => (
+            {activeSlides.map((_, idx) => (
               <button
                 key={idx}
                 onClick={() => setCurrentSlide(idx)}

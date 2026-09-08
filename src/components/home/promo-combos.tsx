@@ -7,7 +7,30 @@ import { ArrowRight } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { cn } from "@/lib/utils";
 
-export function PromoCombos({ className }: { className?: string }) {
+interface PromoCombosProps {
+  comboBanner?: {
+    title?: string;
+    subtitle?: string;
+    ctaText?: string;
+    ctaUrl?: string;
+    imageSrc?: string;
+  };
+  thermalsBanner?: {
+    tag?: string;
+    title?: string;
+    subtitle?: string;
+    ctaText?: string;
+    ctaUrl?: string;
+    imageSrc?: string;
+  };
+  className?: string;
+}
+
+export function PromoCombos({
+  comboBanner,
+  thermalsBanner,
+  className,
+}: PromoCombosProps) {
   return (
     <section className={cn("pt-4 sm:pt-6", className)}>
       <Container size="xl">
@@ -17,8 +40,8 @@ export function PromoCombos({ className }: { className?: string }) {
             {/* Student Photo (Left) */}
             <div className="relative w-36 sm:w-44 aspect-[4/3.4] rounded-xl overflow-hidden shadow-xs bg-sky-100 shrink-0">
               <Image
-                src="/images/combo-kids.jpg"
-                alt="School Uniform Combos"
+                src={comboBanner?.imageSrc || "/images/combo-kids.jpg"}
+                alt={comboBanner?.title || "School Uniform Combos"}
                 fill
                 className="object-cover object-top"
                 sizes="180px"
@@ -29,15 +52,15 @@ export function PromoCombos({ className }: { className?: string }) {
             <div className="flex-1 space-y-2 relative z-10">
               <span className="text-lg text-sky-600">✨</span>
               <h3 className="font-display text-base sm:text-lg font-black text-brand-navy-950 uppercase tracking-tight">
-                Complete School Look
+                {comboBanner?.title || "Complete School Look"}
               </h3>
               <p className="text-xs sm:text-sm font-semibold text-slate-600 leading-tight">
-                Uniforms + Shoes + Accessories
+                {comboBanner?.subtitle || "Uniforms + Shoes + Accessories"}
               </p>
               <div className="pt-1.5">
-                <Link href="/combos">
+                <Link href={comboBanner?.ctaUrl || "/combos"}>
                   <button className="inline-flex items-center gap-1.5 rounded-xl bg-brand-navy-950 px-4 py-2 text-xs font-black uppercase text-white shadow-xs hover:bg-brand-navy-800 transition-all">
-                    <span>SHOP COMBO SETS</span>
+                    <span>{comboBanner?.ctaText || "SHOP COMBO SETS"}</span>
                     <ArrowRight className="h-3.5 w-3.5" />
                   </button>
                 </Link>
@@ -57,16 +80,20 @@ export function PromoCombos({ className }: { className?: string }) {
             {/* Content (Left) */}
             <div className="flex-1 space-y-1.5 relative z-10">
               <span className="text-[10px] font-black uppercase tracking-wider text-pink-700">
-                Thermals Collection
+                {thermalsBanner?.tag || "Thermals Collection"}
               </span>
               <h3 className="font-display text-xl sm:text-2xl font-black text-brand-navy-950 leading-tight">
-                Warmth for <br />
-                Every Adventure
+                {thermalsBanner?.title || (
+                  <>
+                    Warmth for <br />
+                    Every Adventure
+                  </>
+                )}
               </h3>
               <div className="pt-2">
-                <Link href="/category/thermals">
+                <Link href={thermalsBanner?.ctaUrl || "/category/thermals"}>
                   <button className="inline-flex items-center gap-1.5 rounded-xl bg-brand-navy-950 px-4 py-2 text-xs font-black uppercase text-white shadow-xs hover:bg-brand-navy-800 transition-all">
-                    <span>EXPLORE NOW</span>
+                    <span>{thermalsBanner?.ctaText || "EXPLORE NOW"}</span>
                     <ArrowRight className="h-3.5 w-3.5" />
                   </button>
                 </Link>
@@ -76,7 +103,7 @@ export function PromoCombos({ className }: { className?: string }) {
             {/* Thermals Stack Photo (Right) */}
             <div className="relative w-40 sm:w-48 aspect-[4/3.2] rounded-xl overflow-hidden shadow-xs bg-white/50 shrink-0">
               <Image
-                src="/images/thermals-stack.jpg"
+                src={thermalsBanner?.imageSrc || "/images/thermals-stack.jpg"}
                 alt="Kids Thermals Stack"
                 fill
                 className="object-cover"
