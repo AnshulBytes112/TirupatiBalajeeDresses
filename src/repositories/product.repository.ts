@@ -8,7 +8,9 @@ export class ProductRepository extends BaseRepository {
       page = 1,
       limit = 12,
       category,
+      subcategory,
       school,
+      brand,
       gender,
       season,
       search,
@@ -23,24 +25,58 @@ export class ProductRepository extends BaseRepository {
 
     const where: Prisma.ProductWhereInput = {
       isActive: true,
-      ...(category ? { category: { slug: category } } : {}),
-      ...(school ? { school: { slug: school } } : {}),
-      ...(gender ? { gender } : {}),
-      ...(season ? { season } : {}),
+      isDeleted: false,
+      ...(category
+        ? {
+            OR: [
+              { category: { slug: category } },
+              { subcategory: { slug: category } },
+            ],
+          }
+        : {}),
+      ...(subcategory ? { subcategory: { slug: subcategory } } : {}),
+      ...(brand ? { brand: { slug: brand } } : {}),
+      ...(school
+        ? {
+            schoolUniforms: {
+              some: {
+                school: { slug: school },
+              },
+            },
+          }
+        : {}),
+      ...(gender
+        ? {
+            schoolUniforms: {
+              some: {
+                gender: { in: [gender, "UNISEX"] },
+              },
+            },
+          }
+        : {}),
+      ...(season
+        ? {
+            schoolUniforms: {
+              some: {
+                season: { in: [season, "ALL_SEASON"] },
+              },
+            },
+          }
+        : {}),
       ...(isBestseller !== undefined ? { isBestseller } : {}),
       ...(isFeatured !== undefined ? { isFeatured } : {}),
       ...(minPrice !== undefined || maxPrice !== undefined
         ? {
-            basePrice: {
-              ...(minPrice !== undefined ? { gte: minPrice } : {}),
-              ...(maxPrice !== undefined ? { lte: maxPrice } : {}),
+            sellingPrice: {
+              ...(minPrice !== undefined ? { gte: new Prisma.Decimal(minPrice) } : {}),
+              ...(maxPrice !== undefined ? { lte: new Prisma.Decimal(maxPrice) } : {}),
             },
           }
         : {}),
       ...(search
         ? {
             OR: [
-              { title: { contains: search, mode: "insensitive" } },
+              { name: { contains: search, mode: "insensitive" } },
               { description: { contains: search, mode: "insensitive" } },
               { sku: { contains: search, mode: "insensitive" } },
             ],
@@ -50,9 +86,9 @@ export class ProductRepository extends BaseRepository {
 
     let orderBy: Prisma.ProductOrderByWithRelationInput = { createdAt: "desc" };
     if (sortBy === "price_asc") {
-      orderBy = { basePrice: "asc" };
+      orderBy = { sellingPrice: "asc" };
     } else if (sortBy === "price_desc") {
-      orderBy = { basePrice: "desc" };
+      orderBy = { sellingPrice: "desc" };
     } else if (sortBy === "newest") {
       orderBy = { createdAt: "desc" };
     } else if (sortBy === "popular") {
@@ -67,10 +103,22 @@ export class ProductRepository extends BaseRepository {
         orderBy,
         include: {
           category: true,
-          school: true,
+          subcategory: true,
+          brand: true,
           images: { orderBy: { displayOrder: "asc" } },
-          variants: true,
-          reviews: { select: { rating: true } },
+          variants: {
+            where: { isDeleted: false },
+            include: { inventory: true },
+          },
+          schoolUniforms: {
+            include: {
+              school: true,
+            },
+          },
+          reviews: {
+            where: { status: "APPROVED" },
+            select: { rating: true },
+          },
         },
       }),
       this.db.product.count({ where }),
@@ -86,14 +134,25 @@ export class ProductRepository extends BaseRepository {
   }
 
   async findBySlug(slug: string) {
-    return this.db.product.findUnique({
-      where: { slug },
+    return this.db.product.findFirst({
+      where: { slug, isActive: true, isDeleted: false },
       include: {
         category: true,
-        school: true,
+        subcategory: true,
+        brand: true,
         images: { orderBy: { displayOrder: "asc" } },
-        variants: { orderBy: { size: "asc" } },
+        variants: {
+          where: { isDeleted: false },
+          include: { inventory: true },
+          orderBy: { createdAt: "asc" },
+        },
+        schoolUniforms: {
+          include: {
+            school: true,
+          },
+        },
         reviews: {
+          where: { status: "APPROVED" },
           include: {
             user: {
               select: { name: true, image: true },
@@ -107,14 +166,38 @@ export class ProductRepository extends BaseRepository {
 
   async findBestsellers(limit = 6) {
     return this.db.product.findMany({
-      where: { isActive: true, isBestseller: true },
+      where: { isActive: true, isDeleted: false, isBestseller: true },
       take: limit,
       include: {
         category: true,
-        school: true,
+        subcategory: true,
+        brand: true,
         images: { orderBy: { displayOrder: "asc" } },
-        variants: true,
-        reviews: { select: { rating: true } },
+        variants: { where: { isDeleted: false } },
+        schoolUniforms: { include: { school: true } },
+        reviews: {
+          where: { status: "APPROVED" },
+          select: { rating: true },
+        },
+      },
+    });
+  }
+
+  async findFeatured(limit = 6) {
+    return this.db.product.findMany({
+      where: { isActive: true, isDeleted: false, isFeatured: true },
+      take: limit,
+      include: {
+        category: true,
+        subcategory: true,
+        brand: true,
+        images: { orderBy: { displayOrder: "asc" } },
+        variants: { where: { isDeleted: false } },
+        schoolUniforms: { include: { school: true } },
+        reviews: {
+          where: { status: "APPROVED" },
+          select: { rating: true },
+        },
       },
     });
   }

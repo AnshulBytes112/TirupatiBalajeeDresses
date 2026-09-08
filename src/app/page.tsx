@@ -4,7 +4,6 @@ import * as React from "react";
 import Link from "next/link";
 import {
   Sparkles,
-  ShieldCheck,
   CheckCircle2,
   ArrowRight,
   Shirt,
@@ -16,23 +15,23 @@ import {
   BookOpen,
   Droplet,
   Tag,
-  Star,
   Check,
-  Code2,
   Database,
-  Layers as LayersIcon,
   Palette,
+  AlertCircle,
+  RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Container } from "@/components/layout/container";
 import { SectionHeader } from "@/components/layout/section-header";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Modal } from "@/components/ui/modal";
 import { ProductCard } from "@/components/product/product-card";
-import { siteConfig } from "@/config/site";
+import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/feedback/empty-state";
+import { ErrorState } from "@/components/feedback/error-state";
 
-// Category icon map
+// Dynamic Category Icon mapper
 const categoryIcons: Record<string, React.ReactNode> = {
   "summer-dress": <Shirt className="h-6 w-6 sm:h-7 sm:w-7 text-amber-600" />,
   "winter-dress": <Layers className="h-6 w-6 sm:h-7 sm:w-7 text-sky-600" />,
@@ -44,88 +43,134 @@ const categoryIcons: Record<string, React.ReactNode> = {
   stationery: <BookOpen className="h-6 w-6 sm:h-7 sm:w-7 text-cyan-600" />,
   "water-bottles": <Droplet className="h-6 w-6 sm:h-7 sm:w-7 text-blue-500" />,
   "lunch-boxes": <Package className="h-6 w-6 sm:h-7 sm:w-7 text-yellow-600" />,
+  "school-uniforms": <Shirt className="h-6 w-6 sm:h-7 sm:w-7 text-amber-600" />,
 };
 
-// Foundational sample showcase items
-const sampleProducts = [
-  {
-    id: "prod-1",
-    title: "Boys Half Sleeve School Shirt",
-    slug: "boys-half-sleeve-school-shirt",
-    basePrice: 699,
-    salePrice: 499,
-    categoryName: "Summer Dress",
-    schoolName: "Delhi Public School",
-    isBestseller: true,
-    rating: 4.8,
-    reviewsCount: 356,
-  },
-  {
-    id: "prod-2",
-    title: "Girls School Pinafore Dress",
-    slug: "girls-school-pinafore-dress",
-    basePrice: 1099,
-    salePrice: 799,
-    categoryName: "Summer Dress",
-    schoolName: "DAV Public School",
-    isBestseller: true,
-    rating: 4.9,
-    reviewsCount: 210,
-  },
-  {
-    id: "prod-3",
-    title: "Kids Thermal Top & Bottom - Black",
-    slug: "kids-thermal-black",
-    basePrice: 899,
-    salePrice: 599,
-    categoryName: "Thermals",
-    schoolName: null,
-    isBestseller: true,
-    rating: 4.7,
-    reviewsCount: 184,
-  },
-  {
-    id: "prod-4",
-    title: "Classic School Shoes (Unisex Oxford)",
-    slug: "classic-school-shoes-unisex",
-    basePrice: 1399,
-    salePrice: 999,
-    categoryName: "School Shoes",
-    schoolName: null,
-    isBestseller: true,
-    rating: 4.8,
-    reviewsCount: 420,
-  },
-  {
-    id: "prod-5",
-    title: "Cushioned School Socks (Pack of 3)",
-    slug: "cushioned-school-socks-3pack",
-    basePrice: 399,
-    salePrice: 299,
-    categoryName: "Socks & Stockings",
-    schoolName: null,
-    isBestseller: false,
-    rating: 4.6,
-    reviewsCount: 95,
-  },
-  {
-    id: "prod-6",
-    title: "Ergonomic Lightweight School Backpack",
-    slug: "ergonomic-lightweight-school-backpack",
-    basePrice: 1299,
-    salePrice: 859,
-    categoryName: "School Bags",
-    schoolName: null,
-    isBestseller: false,
-    rating: 4.9,
-    reviewsCount: 168,
-  },
-];
+interface ProductItem {
+  id: string;
+  title: string;
+  name: string;
+  slug: string;
+  mrp: number;
+  sellingPrice: number;
+  basePrice: number;
+  salePrice?: number | null;
+  isBestseller: boolean;
+  isFeatured: boolean;
+  rating: number;
+  reviewCount: number;
+  category: { id: string; name: string; slug: string };
+  school?: { id: string; name: string; slug: string } | null;
+  images: { id: string; url: string; alt?: string | null }[];
+}
+
+interface CategoryItem {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+  productsCount: number;
+  children: { id: string; name: string; slug: string; productsCount: number }[];
+}
+
+interface BrandItem {
+  id: string;
+  name: string;
+  slug: string;
+  logoUrl?: string | null;
+  productsCount: number;
+}
+
+interface BannerItem {
+  id: string;
+  title: string;
+  subtitle?: string | null;
+  image: string;
+  ctaText?: string | null;
+  ctaUrl?: string | null;
+  badge?: string | null;
+  position: string;
+}
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = React.useState("All");
   const [isDemoModalOpen, setIsDemoModalOpen] = React.useState(false);
   const [wishlist, setWishlist] = React.useState<Record<string, boolean>>({});
+
+  // Backend state
+  const [categories, setCategories] = React.useState<CategoryItem[]>([]);
+  const [products, setProducts] = React.useState<ProductItem[]>([]);
+  const [brands, setBrands] = React.useState<BrandItem[]>([]);
+  const [banners, setBanners] = React.useState<BannerItem[]>([]);
+  
+  const [isLoadingProducts, setIsLoadingProducts] = React.useState(true);
+  const [isLoadingInitial, setIsLoadingInitial] = React.useState(true);
+  const [hasError, setHasError] = React.useState(false);
+
+  // 1. Fetch Categories, Brands & Banners on initial load
+  const fetchInitialData = React.useCallback(async () => {
+    try {
+      setHasError(false);
+      const [catRes, brandRes, bannerRes] = await Promise.all([
+        fetch("/api/categories"),
+        fetch("/api/brands"),
+        fetch("/api/banners"),
+      ]);
+
+      if (!catRes.ok || !brandRes.ok || !bannerRes.ok) {
+        throw new Error("Failed to load initial website catalog data");
+      }
+
+      const catJson = await catRes.json();
+      const brandJson = await brandRes.json();
+      const bannerJson = await bannerRes.json();
+
+      setCategories(catJson.data || []);
+      setBrands(brandJson.data || []);
+      setBanners(bannerJson.data || []);
+    } catch (err) {
+      console.error("Initial data load error:", err);
+      setHasError(true);
+    } finally {
+      setIsLoadingInitial(false);
+    }
+  }, []);
+
+  // 2. Fetch Products dynamically based on active filter tab
+  const fetchProducts = React.useCallback(async (tab: string) => {
+    try {
+      setIsLoadingProducts(true);
+      let queryUrl = "/api/products?limit=12&sortBy=popular";
+
+      if (tab === "Uniforms") {
+        queryUrl += "&category=school-uniforms";
+      } else if (tab === "Thermals") {
+        queryUrl += "&category=thermals";
+      } else if (tab === "School Items") {
+        queryUrl += "&category=school-accessories";
+      } else if (tab === "Bestsellers") {
+        queryUrl += "&isBestseller=true";
+      }
+
+      const res = await fetch(queryUrl);
+      if (!res.ok) throw new Error("Failed to fetch products");
+
+      const json = await res.json();
+      setProducts(json.data || []);
+    } catch (err) {
+      console.error("Products fetch error:", err);
+    } finally {
+      setIsLoadingProducts(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    fetchInitialData();
+  }, [fetchInitialData]);
+
+  React.useEffect(() => {
+    fetchProducts(activeTab);
+  }, [activeTab, fetchProducts]);
 
   const toggleWishlist = (id: string) => {
     setWishlist((prev) => {
@@ -139,9 +184,46 @@ export default function HomePage() {
     });
   };
 
+  // Hero & Split banners from dynamic backend
+  const heroBanner = banners.find((b) => b.position === "HERO") || {
+    title: "Uniforms for Every Season",
+    subtitle: "Comfort. Confidence. A Brighter Tomorrow.",
+    badge: "School Days, Brighter Always",
+    ctaText: "SHOP SCHOOL UNIFORMS",
+    ctaUrl: "/category/school-uniforms",
+  };
+
+  const splitBanners = banners.filter((b) => b.position === "PROMO_SPLIT");
+  const summerBanner = splitBanners[0] || {
+    title: "Stay Cool This Summer",
+    subtitle: "Comfortable Uniforms for Active Days",
+    ctaText: "SHOP SUMMER DRESS",
+    ctaUrl: "/category/summer-dress",
+  };
+  const winterBanner = splitBanners[1] || {
+    title: "Stay Warm This Winter",
+    subtitle: "Premium Winter Uniforms for Every Season",
+    ctaText: "SHOP WINTER DRESS",
+    ctaUrl: "/category/winter-dress",
+  };
+
+  if (hasError && categories.length === 0) {
+    return (
+      <div className="py-20">
+        <Container size="md">
+          <ErrorState
+            title="Failed to connect to database"
+            message="We could not retrieve catalog data from PostgreSQL. Please ensure the backend database is running and try again."
+            onRetry={fetchInitialData}
+          />
+        </Container>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-10 sm:space-y-16 pb-12">
-      {/* 1. HERO SECTION (MASTER REFERENCE) */}
+      {/* 1. HERO SECTION (DYNAMICALLY BACKEND DRIVEN) */}
       <section className="pt-4 sm:pt-6">
         <Container size="xl">
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-sky-100 via-brand-cream-50 to-amber-50 border border-sky-100/60 p-6 sm:p-10 lg:p-14 shadow-card">
@@ -154,7 +236,7 @@ export default function HomePage() {
               <div className="lg:col-span-7 space-y-5 sm:space-y-6">
                 <div className="inline-flex items-center gap-2 rounded-full bg-white/90 px-3.5 py-1 text-xs font-extrabold uppercase tracking-wider text-brand-navy-900 shadow-subtle border border-slate-100">
                   <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                  School Days, Brighter Always
+                  {heroBanner.badge || "School Days, Brighter Always"}
                 </div>
 
                 <h1 className="font-display text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-brand-navy-950 leading-[1.1]">
@@ -165,37 +247,42 @@ export default function HomePage() {
                 </h1>
 
                 <p className="max-w-xl text-sm sm:text-base font-medium text-slate-600 leading-relaxed">
-                  Comfort. Confidence. A Brighter Tomorrow. Providing premium quality school
-                  uniforms, thermals, durable shoes, and academic essentials for students across India.
+                  {heroBanner.subtitle ||
+                    "Comfort. Confidence. A Brighter Tomorrow. Providing premium quality school uniforms, thermals, durable shoes, and academic essentials for students across India."}
                 </p>
 
                 {/* Season Badges */}
                 <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-yellow-200/90 px-4 py-1.5 text-xs sm:text-sm font-bold text-brand-navy-950 shadow-subtle">
-                    ☀️ Summer Dress
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-200/80 px-4 py-1.5 text-xs sm:text-sm font-bold text-sky-950 shadow-subtle">
-                    ❄️ Winter Dress
-                  </span>
+                  <Link href="/category/summer-dress">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-yellow-200/90 px-4 py-1.5 text-xs sm:text-sm font-bold text-brand-navy-950 shadow-subtle hover:bg-brand-yellow-300 transition-colors">
+                      ☀️ Summer Dress
+                    </span>
+                  </Link>
+                  <Link href="/category/winter-dress">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-200/80 px-4 py-1.5 text-xs sm:text-sm font-bold text-sky-950 shadow-subtle hover:bg-sky-300 transition-colors">
+                      ❄️ Winter Dress
+                    </span>
+                  </Link>
                 </div>
 
                 {/* Hero CTA & Quick Actions */}
                 <div className="flex flex-wrap items-center gap-3 pt-2">
-                  <Button
-                    variant="default"
-                    size="lg"
-                    rightIcon={<ArrowRight className="h-4 w-4" />}
-                    onClick={() => toast.success("Browsing School Uniforms Catalog")}
-                  >
-                    SHOP SCHOOL UNIFORMS
-                  </Button>
+                  <Link href={heroBanner.ctaUrl || "/category/school-uniforms"}>
+                    <Button
+                      variant="default"
+                      size="lg"
+                      rightIcon={<ArrowRight className="h-4 w-4" />}
+                    >
+                      {heroBanner.ctaText || "SHOP SCHOOL UNIFORMS"}
+                    </Button>
+                  </Link>
 
                   <Button
                     variant="outline"
                     size="lg"
                     onClick={() => setIsDemoModalOpen(true)}
                   >
-                    Architecture Status
+                    Database Architecture Status
                   </Button>
                 </div>
 
@@ -249,7 +336,7 @@ export default function HomePage() {
         </Container>
       </section>
 
-      {/* 2. SHOP BY CATEGORY (MASTER REFERENCE) */}
+      {/* 2. SHOP BY CATEGORY (DYNAMICALLY FROM POSTGRESQL) */}
       <section>
         <Container size="xl">
           <SectionHeader
@@ -258,22 +345,33 @@ export default function HomePage() {
             viewAllHref="/categories"
           />
 
-          <div className="grid grid-cols-2 sm:grid-cols-5 lg:grid-cols-10 gap-3 sm:gap-4 pt-2">
-            {siteConfig.categories.map((cat) => (
-              <Link
-                key={cat.id}
-                href={`/category/${cat.slug}`}
-                className="group flex flex-col items-center gap-2 p-3 rounded-2xl bg-white border border-slate-100/80 shadow-subtle hover:shadow-card-hover hover:border-brand-yellow-300 transition-all duration-200 text-center"
-              >
-                <div className="flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-2xl bg-brand-cream-100/90 group-hover:bg-brand-yellow-200/70 group-hover:scale-105 transition-all">
-                  {categoryIcons[cat.id] || <Shirt className="h-6 w-6 text-brand-navy-900" />}
+          {isLoadingInitial ? (
+            <div className="grid grid-cols-2 sm:grid-cols-5 lg:grid-cols-10 gap-3 sm:gap-4 pt-2">
+              {Array.from({ length: 10 }).map((_, i) => (
+                <div key={i} className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-white border border-slate-100">
+                  <Skeleton className="h-14 w-14 sm:h-16 sm:w-16 rounded-2xl" />
+                  <Skeleton className="h-3 w-16 rounded" />
                 </div>
-                <span className="text-xs font-bold text-brand-navy-950 group-hover:text-brand-navy-800 transition-colors leading-tight">
-                  {cat.name}
-                </span>
-              </Link>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-5 lg:grid-cols-10 gap-3 sm:gap-4 pt-2">
+              {categories.map((cat) => (
+                <Link
+                  key={cat.id}
+                  href={`/category/${cat.slug}`}
+                  className="group flex flex-col items-center gap-2 p-3 rounded-2xl bg-white border border-slate-100/80 shadow-subtle hover:shadow-card-hover hover:border-brand-yellow-300 transition-all duration-200 text-center"
+                >
+                  <div className="flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-2xl bg-brand-cream-100/90 group-hover:bg-brand-yellow-200/70 group-hover:scale-105 transition-all">
+                    {categoryIcons[cat.slug] || <Shirt className="h-6 w-6 text-brand-navy-900" />}
+                  </div>
+                  <span className="text-xs font-bold text-brand-navy-950 group-hover:text-brand-navy-800 transition-colors leading-tight">
+                    {cat.name}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          )}
         </Container>
       </section>
 
@@ -286,22 +384,23 @@ export default function HomePage() {
               <div className="space-y-2">
                 <span className="inline-block text-2xl">☀️</span>
                 <h3 className="text-xl sm:text-2xl font-black text-brand-navy-950">
-                  Stay Cool This Summer
+                  {summerBanner.title}
                 </h3>
                 <p className="text-xs sm:text-sm font-medium text-brand-navy-800/80 max-w-xs">
-                  Breathable cotton blend shirts, skirts, shorts & active wear for school days.
+                  {summerBanner.subtitle}
                 </p>
               </div>
 
               <div className="pt-4">
-                <Button
-                  variant="primary"
-                  size="default"
-                  rightIcon={<ArrowRight className="h-4 w-4" />}
-                  onClick={() => toast.success("Opening Summer Uniforms")}
-                >
-                  SHOP SUMMER DRESS
-                </Button>
+                <Link href={summerBanner.ctaUrl || "/category/summer-dress"}>
+                  <Button
+                    variant="primary"
+                    size="default"
+                    rightIcon={<ArrowRight className="h-4 w-4" />}
+                  >
+                    {summerBanner.ctaText || "SHOP SUMMER DRESS"}
+                  </Button>
+                </Link>
               </div>
             </div>
 
@@ -310,29 +409,30 @@ export default function HomePage() {
               <div className="space-y-2">
                 <span className="inline-block text-2xl">❄️</span>
                 <h3 className="text-xl sm:text-2xl font-black text-brand-navy-950">
-                  Stay Warm This Winter
+                  {winterBanner.title}
                 </h3>
                 <p className="text-xs sm:text-sm font-medium text-slate-700 max-w-xs">
-                  Premium blazers, sweaters, thermal inners, and cardigans for chilly mornings.
+                  {winterBanner.subtitle}
                 </p>
               </div>
 
               <div className="pt-4">
-                <Button
-                  variant="primary"
-                  size="default"
-                  rightIcon={<ArrowRight className="h-4 w-4" />}
-                  onClick={() => toast.success("Opening Winter Uniforms")}
-                >
-                  SHOP WINTER DRESS
-                </Button>
+                <Link href={winterBanner.ctaUrl || "/category/winter-dress"}>
+                  <Button
+                    variant="primary"
+                    size="default"
+                    rightIcon={<ArrowRight className="h-4 w-4" />}
+                  >
+                    {winterBanner.ctaText || "SHOP WINTER DRESS"}
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>
         </Container>
       </section>
 
-      {/* 4. TRENDING NOW (MASTER REFERENCE PRODUCT GRID) */}
+      {/* 4. TRENDING NOW (DYNAMICALLY SERVED FROM POSTGRESQL VIA REST API) */}
       <section>
         <Container size="xl">
           <SectionHeader
@@ -359,25 +459,46 @@ export default function HomePage() {
           </div>
 
           {/* Product Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-            {sampleProducts.map((product) => (
-              <ProductCard
-                key={product.id}
-                id={product.id}
-                title={product.title}
-                slug={product.slug}
-                basePrice={product.basePrice}
-                salePrice={product.salePrice}
-                categoryName={product.categoryName}
-                schoolName={product.schoolName}
-                isBestseller={product.isBestseller}
-                rating={product.rating}
-                reviewsCount={product.reviewsCount}
-                isWishlisted={!!wishlist[product.id]}
-                onWishlistToggle={toggleWishlist}
-              />
-            ))}
-          </div>
+          {isLoadingProducts ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="flex flex-col gap-3 rounded-2xl border border-slate-100 bg-white p-3">
+                  <Skeleton className="aspect-[4/4.2] w-full rounded-xl" />
+                  <Skeleton className="h-3 w-16" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+              ))}
+            </div>
+          ) : products.length === 0 ? (
+            <EmptyState
+              title="No products found in this collection"
+              description="Check back soon or explore our complete school uniforms catalog."
+              actionLabel="View All Uniforms"
+              onAction={() => setActiveTab("All")}
+            />
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+              {products.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  id={product.id}
+                  title={product.name || product.title}
+                  slug={product.slug}
+                  basePrice={product.mrp || product.basePrice}
+                  salePrice={product.sellingPrice || product.salePrice}
+                  imageUrl={product.images[0]?.url}
+                  categoryName={product.category?.name}
+                  schoolName={product.school?.name || null}
+                  isBestseller={product.isBestseller}
+                  rating={product.rating}
+                  reviewsCount={product.reviewCount}
+                  isWishlisted={!!wishlist[product.id]}
+                  onWishlistToggle={toggleWishlist}
+                />
+              ))}
+            </div>
+          )}
         </Container>
       </section>
 
@@ -394,14 +515,11 @@ export default function HomePage() {
                 <h3 className="mt-2 text-lg font-black text-brand-navy-950">COMPLETE SCHOOL LOOK</h3>
                 <p className="text-xs text-slate-600 mt-1">Uniforms + Shoes + Accessories</p>
               </div>
-              <Button
-                variant="default"
-                size="sm"
-                className="self-start"
-                onClick={() => toast.success("Opening Combo Sets")}
-              >
-                SHOP COMBO SETS
-              </Button>
+              <Link href="/combos">
+                <Button variant="default" size="sm" className="self-start">
+                  SHOP COMBO SETS
+                </Button>
+              </Link>
             </div>
 
             {/* Promo 2: Pink */}
@@ -413,14 +531,11 @@ export default function HomePage() {
                 <h3 className="mt-2 text-lg font-black text-brand-navy-950">Warmth for Every Adventure</h3>
                 <p className="text-xs text-slate-600 mt-1">Soft, lightweight multi-stretch thermals</p>
               </div>
-              <Button
-                variant="default"
-                size="sm"
-                className="self-start"
-                onClick={() => toast.success("Opening Thermals")}
-              >
-                EXPLORE NOW
-              </Button>
+              <Link href="/category/thermals">
+                <Button variant="default" size="sm" className="self-start">
+                  EXPLORE NOW
+                </Button>
+              </Link>
             </div>
 
             {/* Promo 3: Yellow */}
@@ -442,7 +557,7 @@ export default function HomePage() {
         </Container>
       </section>
 
-      {/* 6. TOP BRANDS */}
+      {/* 6. TOP BRANDS (DYNAMICALLY FROM DATABASE) */}
       <section>
         <Container size="xl">
           <SectionHeader
@@ -452,59 +567,59 @@ export default function HomePage() {
           />
 
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 pt-2">
-            {siteConfig.brands.map((brand) => (
-              <div
-                key={brand.slug}
-                className="flex h-14 items-center justify-center rounded-2xl bg-white border border-slate-100 shadow-subtle p-3 text-center"
+            {brands.map((brand) => (
+              <Link
+                key={brand.id}
+                href={`/brand/${brand.slug}`}
+                className="flex h-14 items-center justify-center rounded-2xl bg-white border border-slate-100 shadow-subtle p-3 text-center hover:border-brand-yellow-300 hover:shadow-card transition-all"
               >
                 <span className="text-xs font-black tracking-tight text-brand-navy-900">
                   {brand.name}
                 </span>
-              </div>
+              </Link>
             ))}
           </div>
         </Container>
       </section>
 
-      {/* MODAL: Architecture Verification Modal */}
+      {/* MODAL: Database Architecture Verification Modal */}
       <Modal
         isOpen={isDemoModalOpen}
         onClose={() => setIsDemoModalOpen(false)}
-        title="Phase 0: Architecture & Foundation Status"
+        title="Phase 1: Database & API Architecture Status"
         maxWidth="lg"
       >
         <div className="space-y-4 text-xs sm:text-sm">
           <div className="rounded-xl bg-slate-50 p-3.5 space-y-2 border border-slate-200">
             <div className="flex items-center gap-2 font-bold text-brand-navy-950">
-              <Check className="h-4 w-4 text-emerald-600" />
-              <span>Layered Architecture Established:</span>
+              <Database className="h-4 w-4 text-emerald-600" />
+              <span>PostgreSQL & Prisma Schema Connected:</span>
             </div>
             <p className="text-slate-600 pl-6">
-              UI components (<code>src/components</code>) → Hooks (<code>src/hooks</code>) →
-              Services (<code>src/services</code>) → Repositories (<code>src/repositories</code>) →
-              Database (<code>src/lib/prisma.ts</code>)
+              Live PostgreSQL database with Decimal precision for prices, UUID keys, composite indexes, soft deletes, and inventory tracking.
             </p>
           </div>
 
           <div className="rounded-xl bg-slate-50 p-3.5 space-y-2 border border-slate-200">
             <div className="flex items-center gap-2 font-bold text-brand-navy-950">
-              <Database className="h-4 w-4 text-emerald-600" />
-              <span>Database Layer:</span>
+              <Check className="h-4 w-4 text-emerald-600" />
+              <span>Seeded Database Statistics:</span>
             </div>
             <p className="text-slate-600 pl-6">
-              Prisma ORM schema with User, School, Category, Product, ProductVariant, Cart, Order,
-              Review models.
+              • <strong>{brands.length}</strong> Brands (TirupatiBalajee, Bata, Nivia, Cello, Camlin, etc.)<br />
+              • <strong>{categories.length}</strong> Main Categories & Subcategories<br />
+              • <strong>41</strong> Uniforms & Essentials Products with <strong>391</strong> Variants & Inventory records<br />
+              • <strong>6</strong> Major Indian Schools with Many-to-Many Uniform mappings
             </p>
           </div>
 
           <div className="rounded-xl bg-slate-50 p-3.5 space-y-2 border border-slate-200">
             <div className="flex items-center gap-2 font-bold text-brand-navy-950">
               <Palette className="h-4 w-4 text-emerald-600" />
-              <span>Design System Tokens:</span>
+              <span>API Layer Status:</span>
             </div>
             <p className="text-slate-600 pl-6">
-              Cream (#FAF7F2), Buttery Yellow (#FACC15), Dark Navy (#0F172A), Pastel Blue/Pink/Green
-              matching master reference.
+              <code>GET /api/products</code> • <code>GET /api/categories</code> • <code>GET /api/schools</code> • <code>GET /api/brands</code> • <code>GET /api/banners</code> (All active with Zod validation and standard JSON envelope).
             </p>
           </div>
 

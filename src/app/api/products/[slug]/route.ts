@@ -1,0 +1,17 @@
+import { NextRequest } from "next/server";
+import { productService } from "@/services/product.service";
+import { successResponse, errorResponse } from "@/lib/api-response";
+
+export const dynamic = "force-dynamic";
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { slug: string } }
+) {
+  try {
+    const product = await productService.getProductBySlug(params.slug);
+    return successResponse(product, "Product details retrieved successfully");
+  } catch (error) {
+    return errorResponse(error);
+  }
+}

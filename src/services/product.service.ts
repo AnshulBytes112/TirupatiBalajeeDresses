@@ -1,49 +1,90 @@
 import { productRepository } from "@/repositories/product.repository";
 import { GetProductsQuery } from "@/validations/product.schema";
 import { NotFoundError } from "@/lib/errors";
+import { Prisma } from "@prisma/client";
+
+type ProductWithRelations = Prisma.ProductGetPayload<{
+  include: {
+    category: true;
+    subcategory: true;
+    brand: true;
+    images: true;
+    variants: {
+      include: { inventory: true };
+    };
+    schoolUniforms: {
+      include: {
+        school: true;
+      };
+    };
+    reviews: {
+      select: { rating: true };
+    };
+  };
+}>;
 
 export class ProductService {
   async getProducts(query: GetProductsQuery) {
     const result = await productRepository.findMany(query);
-    
-    // Map with computed ratings and review counts
-    const mappedProducts = result.products.map((p) => {
+
+    const items = (result.products as ProductWithRelations[]).map((p) => {
       const avgRating =
         p.reviews.length > 0
           ? Number((p.reviews.reduce((acc, r) => acc + r.rating, 0) / p.reviews.length).toFixed(1))
-          : 4.8; // Default initial positive rating
-      const reviewsCount = p.reviews.length || 12;
+          : Number(p.rating);
+
+      const reviewCount = p.reviews.length > 0 ? p.reviews.length : p.reviewCount;
+
+      // Extract school names from school uniforms mapping
+      const schools = p.schoolUniforms.map((su) => ({
+        id: su.school.id,
+        name: su.school.name,
+        slug: su.school.slug,
+        season: su.season,
+        gender: su.gender,
+        classGrade: su.classGrade,
+      }));
+
+      const primarySchool = schools.length > 0 ? schools[0] : null;
 
       return {
         id: p.id,
-        title: p.title,
+        title: p.name,
+        name: p.name,
         slug: p.slug,
         sku: p.sku,
         description: p.description,
         fabricDetails: p.fabricDetails,
         careInstructions: p.careInstructions,
-        basePrice: p.basePrice,
-        salePrice: p.salePrice,
-        gender: p.gender,
-        season: p.season,
-        isBestseller: p.isBestseller,
+        mrp: Number(p.mrp),
+        sellingPrice: Number(p.sellingPrice),
+        basePrice: Number(p.mrp),
+        salePrice: Number(p.sellingPrice),
         isFeatured: p.isFeatured,
+        isBestseller: p.isBestseller,
+        rating: avgRating,
+        reviewCount,
         category: {
           id: p.category.id,
           name: p.category.name,
           slug: p.category.slug,
         },
-        school: p.school
+        subcategory: p.subcategory
           ? {
-              id: p.school.id,
-              name: p.school.name,
-              slug: p.school.slug,
-              board: p.school.board,
-              city: p.school.city,
-              state: p.school.state,
-              logoUrl: p.school.logoUrl,
+              id: p.subcategory.id,
+              name: p.subcategory.name,
+              slug: p.subcategory.slug,
             }
           : null,
+        brand: p.brand
+          ? {
+              id: p.brand.id,
+              name: p.brand.name,
+              slug: p.brand.slug,
+            }
+          : null,
+        school: primarySchool,
+        schools,
         images: p.images.map((img) => ({
           id: img.id,
           url: img.url,
@@ -56,17 +97,17 @@ export class ProductService {
           size: v.size,
           color: v.color,
           sku: v.sku,
-          price: v.price,
-          compareAtPrice: v.compareAtPrice,
-          stockQuantity: v.stockQuantity,
+          mrp: v.mrp ? Number(v.mrp) : Number(p.mrp),
+          sellingPrice: Number(v.sellingPrice),
+          price: Number(v.sellingPrice),
+          isAvailable: v.isAvailable,
+          stock: v.inventory?.availableQuantity ?? 0,
         })),
-        rating: avgRating,
-        reviewsCount,
       };
     });
 
     return {
-      items: mappedProducts,
+      items,
       pagination: {
         total: result.total,
         page: result.page,
@@ -87,12 +128,80 @@ export class ProductService {
     const avgRating =
       p.reviews.length > 0
         ? Number((p.reviews.reduce((acc, r) => acc + r.rating, 0) / p.reviews.length).toFixed(1))
-        : 4.8;
+        : Number(p.rating);
+
+    const reviewCount = p.reviews.length > 0 ? p.reviews.length : p.reviewCount;
 
     return {
-      ...p,
+      id: p.id,
+      title: p.name,
+      name: p.name,
+      slug: p.slug,
+      sku: p.sku,
+      description: p.description,
+      fabricDetails: p.fabricDetails,
+      careInstructions: p.careInstructions,
+      mrp: Number(p.mrp),
+      sellingPrice: Number(p.sellingPrice),
+      basePrice: Number(p.mrp),
+      salePrice: Number(p.sellingPrice),
+      isFeatured: p.isFeatured,
+      isBestseller: p.isBestseller,
       rating: avgRating,
-      reviewsCount: p.reviews.length,
+      reviewCount,
+      seoTitle: p.seoTitle,
+      seoDescription: p.seoDescription,
+      category: {
+        id: p.category.id,
+        name: p.category.name,
+        slug: p.category.slug,
+      },
+      subcategory: p.subcategory
+        ? {
+            id: p.subcategory.id,
+            name: p.subcategory.name,
+            slug: p.subcategory.slug,
+          }
+        : null,
+      brand: p.brand
+        ? {
+            id: p.brand.id,
+            name: p.brand.name,
+            slug: p.brand.slug,
+          }
+        : null,
+      schools: p.schoolUniforms.map((su) => ({
+        id: su.school.id,
+        name: su.school.name,
+        slug: su.school.slug,
+        board: su.school.board,
+        season: su.season,
+        gender: su.gender,
+        classGrade: su.classGrade,
+        uniformType: su.uniformType,
+        isCompulsory: su.isCompulsory,
+      })),
+      images: p.images.map((img) => ({
+        id: img.id,
+        url: img.url,
+        alt: img.alt,
+        displayOrder: img.displayOrder,
+        isPrimary: img.isPrimary,
+      })),
+      variants: p.variants.map((v) => ({
+        id: v.id,
+        size: v.size,
+        color: v.color,
+        sku: v.sku,
+        mrp: v.mrp ? Number(v.mrp) : Number(p.mrp),
+        sellingPrice: Number(v.sellingPrice),
+        isAvailable: v.isAvailable,
+        stock: v.inventory?.availableQuantity ?? 0,
+      })),
+      reviews: p.reviews.map((r) => ({
+        rating: r.rating,
+        user: r.user.name || "Verified Parent",
+      })),
     };
   }
 
@@ -100,26 +209,43 @@ export class ProductService {
     const products = await productRepository.findBestsellers(limit);
     return products.map((p) => ({
       id: p.id,
-      title: p.title,
+      title: p.name,
+      name: p.name,
       slug: p.slug,
       sku: p.sku,
       description: p.description,
-      basePrice: p.basePrice,
-      salePrice: p.salePrice,
-      gender: p.gender,
-      season: p.season,
+      mrp: Number(p.mrp),
+      sellingPrice: Number(p.sellingPrice),
+      basePrice: Number(p.mrp),
+      salePrice: Number(p.sellingPrice),
       isBestseller: p.isBestseller,
+      rating: Number(p.rating),
+      reviewCount: p.reviewCount,
+      categoryName: p.category.name,
+      schoolName: p.schoolUniforms[0]?.school.name || null,
+      imageUrl: p.images[0]?.url || `/images/products/${p.slug}.png`,
+    }));
+  }
+
+  async getFeatured(limit = 6) {
+    const products = await productRepository.findFeatured(limit);
+    return products.map((p) => ({
+      id: p.id,
+      title: p.name,
+      name: p.name,
+      slug: p.slug,
+      sku: p.sku,
+      description: p.description,
+      mrp: Number(p.mrp),
+      sellingPrice: Number(p.sellingPrice),
+      basePrice: Number(p.mrp),
+      salePrice: Number(p.sellingPrice),
       isFeatured: p.isFeatured,
-      category: {
-        id: p.category.id,
-        name: p.category.name,
-        slug: p.category.slug,
-      },
-      school: p.school ? { name: p.school.name, slug: p.school.slug } : null,
-      images: p.images,
-      variants: p.variants,
-      rating: 4.8,
-      reviewsCount: p.reviews.length || 24,
+      rating: Number(p.rating),
+      reviewCount: p.reviewCount,
+      categoryName: p.category.name,
+      schoolName: p.schoolUniforms[0]?.school.name || null,
+      imageUrl: p.images[0]?.url || `/images/products/${p.slug}.png`,
     }));
   }
 }
