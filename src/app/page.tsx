@@ -10,7 +10,7 @@ import { PromoCombos } from "@/components/home/promo-combos";
 import { SchoolSelectorSection } from "@/components/home/school-selector-section";
 import { TrustFooterBadges } from "@/components/home/trust-footer-badges";
 
-// Master Products with realistic photography matching reference screenshot
+// Master Fallback Products with realistic photography matching reference screenshot
 const MASTER_TRENDING_PRODUCTS = [
   {
     id: "p-1",
@@ -72,7 +72,6 @@ export default function HomePage() {
   // Backend state
   const [schools, setSchools] = React.useState<any[]>([]);
   const [banners, setBanners] = React.useState<any[]>([]);
-  const [trendingProducts, setTrendingProducts] = React.useState<any[]>(MASTER_TRENDING_PRODUCTS);
   const [dynamicHomepage, setDynamicHomepage] = React.useState<any>(null);
   const [isLoadingTrending, setIsLoadingTrending] = React.useState(false);
 
@@ -119,7 +118,11 @@ export default function HomePage() {
       <CategoryGrid cards={dynamicHomepage?.categoryCards} />
 
       {/* 3. PROMOTIONAL SPLIT: Stay Cool This Summer & Stay Warm This Winter */}
-      <PromoSplit summerBanner={summerBanner} winterBanner={winterBanner} />
+      <PromoSplit
+        cards={dynamicHomepage?.promoSplitCards}
+        summerBanner={summerBanner}
+        winterBanner={winterBanner}
+      />
 
       {/* 4. PRODUCT GRID: Trending Now */}
       <ProductCarouselSection
@@ -132,7 +135,8 @@ export default function HomePage() {
           dynamicHomepage?.trendingSettings?.viewAllHref ||
           "/products?filter=trending"
         }
-        products={trendingProducts}
+        products={MASTER_TRENDING_PRODUCTS}
+        dynamicProducts={dynamicHomepage?.trendingProducts}
         isLoading={isLoadingTrending}
       />
 
@@ -141,6 +145,7 @@ export default function HomePage() {
 
       {/* 6. PROMO COMBOS: Complete School Look & Thermals Collection */}
       <PromoCombos
+        cards={dynamicHomepage?.promoComboCards}
         comboBanner={dynamicHomepage?.promoCombos?.comboBanner}
         thermalsBanner={dynamicHomepage?.promoCombos?.thermalsBanner}
       />

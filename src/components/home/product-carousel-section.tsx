@@ -3,9 +3,10 @@
 import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, Heart } from "lucide-react";
+import { ArrowRight, Heart, Star } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DynamicTrendingProduct } from "@/types/homepage";
 import { cn } from "@/lib/utils";
 
 export interface ProductItem {
@@ -17,13 +18,18 @@ export interface ProductItem {
   isBestseller?: boolean;
   category?: { name: string; slug: string };
   imageUrl?: string;
+  rating?: number;
+  reviewCount?: number;
+  discountBadge?: string;
+  schoolName?: string;
 }
 
 interface ProductCarouselSectionProps {
-  title: string;
+  title?: string;
   subtitle?: string;
   viewAllHref?: string;
   products?: ProductItem[];
+  dynamicProducts?: DynamicTrendingProduct[];
   isLoading?: boolean;
   className?: string;
 }
@@ -33,6 +39,7 @@ export function ProductCarouselSection({
   subtitle = "Most loved products by parents and students alike",
   viewAllHref = "/products?filter=trending",
   products = [],
+  dynamicProducts,
   isLoading = false,
   className,
 }: ProductCarouselSectionProps) {
@@ -43,6 +50,28 @@ export function ProductCarouselSection({
     e.stopPropagation();
     setWishlist((prev) => ({ ...prev, [id]: !prev[id] }));
   };
+
+  // Harmonize product items
+  const items: ProductItem[] = React.useMemo(() => {
+    if (dynamicProducts && dynamicProducts.length > 0) {
+      return dynamicProducts
+        .filter((dp) => dp.isActive !== false)
+        .map((dp) => ({
+          id: dp.id,
+          name: dp.name,
+          slug: dp.productUrl?.replace("/product/", "") || dp.id,
+          mrp: dp.mrp,
+          sellingPrice: dp.sellingPrice,
+          isBestseller: dp.isBestseller,
+          imageUrl: dp.imageUrl,
+          rating: dp.rating,
+          reviewCount: dp.reviewCount,
+          discountBadge: dp.discountBadge,
+          schoolName: dp.schoolName,
+        }));
+    }
+    return products;
+  }, [dynamicProducts, products]);
 
   return (
     <section className={cn("pt-4 sm:pt-6", className)}>
@@ -68,7 +97,7 @@ export function ProductCarouselSection({
           </Link>
         </div>
 
-        {/* 6 Products Grid matching reference */}
+        {/* Products Grid */}
         {isLoading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3.5">
             {Array.from({ length: 6 }).map((_, idx) => (
@@ -81,9 +110,9 @@ export function ProductCarouselSection({
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3.5">
-            {products.slice(0, 6).map((item) => {
+            {items.map((item) => {
               const discountPercent =
-                item.mrp && item.sellingPrice
+                item.mrp && item.sellingPrice && item.mrp > item.sellingPrice
                   ? Math.round(((item.mrp - item.sellingPrice) / item.mrp) * 100)
                   : 0;
 
@@ -150,6 +179,19 @@ export function ProductCarouselSection({
                       </h3>
                     </Link>
 
+                    {/* Rating if present */}
+                    {item.rating && (
+                      <div className="mt-1 flex items-center gap-1 text-[11px] font-bold text-amber-600">
+                        <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                        <span>{item.rating}</span>
+                        {item.reviewCount && (
+                          <span className="text-[10px] text-slate-400 font-normal">
+                            ({item.reviewCount})
+                          </span>
+                        )}
+                      </div>
+                    )}
+
                     {/* Price and Discount Row */}
                     <div className="mt-1.5 flex items-baseline gap-1.5 flex-wrap">
                       <span className="text-xs sm:text-sm font-black text-slate-900">
@@ -161,7 +203,7 @@ export function ProductCarouselSection({
                             ₹{item.mrp}
                           </span>
                           <span className="text-[10.5px] sm:text-xs font-bold text-[#15803D]">
-                            {discountPercent}% OFF
+                            {item.discountBadge || `${discountPercent}% OFF`}
                           </span>
                         </>
                       )}

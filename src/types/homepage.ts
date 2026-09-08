@@ -31,25 +31,79 @@ export interface DynamicCategoryCard {
   isActive?: boolean;
 }
 
-export interface DynamicPromoBanner {
+export interface DynamicPromoSplitCard {
+  id: string;
   title: string;
   subtitle: string;
   ctaText: string;
   ctaUrl: string;
   imageSrc: string;
   doodleText?: string;
+  iconEmoji?: string;
   bgColor?: string;
   borderColor?: string;
+  isActive?: boolean;
+}
+
+export interface DynamicPromoComboCard {
+  id: string;
+  tag?: string;
+  title: string;
+  subtitle: string;
+  ctaText: string;
+  ctaUrl: string;
+  imageSrc: string;
+  bgColor?: string;
+  borderColor?: string;
+  layout?: "image-left" | "image-right";
+  isActive?: boolean;
+}
+
+export interface DynamicTrendingProduct {
+  id: string;
+  name: string;
+  subtitle?: string;
+  schoolName?: string;
+  categoryName?: string;
+  mrp: number;
+  sellingPrice: number;
+  discountBadge?: string;
+  rating?: number;
+  reviewCount?: number;
+  imageUrl: string;
+  productUrl: string;
+  isBestseller?: boolean;
+  isActive?: boolean;
 }
 
 export interface DynamicHomepageData {
   heroSlides: DynamicHeroSlide[];
   categoryCards: DynamicCategoryCard[];
-  promoSplit: {
-    summerBanner: DynamicPromoBanner;
-    winterBanner: DynamicPromoBanner;
+  promoSplitCards?: DynamicPromoSplitCard[];
+  promoSplit?: {
+    summerBanner: {
+      title: string;
+      subtitle: string;
+      ctaText: string;
+      ctaUrl: string;
+      imageSrc: string;
+      doodleText?: string;
+      bgColor?: string;
+      borderColor?: string;
+    };
+    winterBanner: {
+      title: string;
+      subtitle: string;
+      ctaText: string;
+      ctaUrl: string;
+      imageSrc: string;
+      doodleText?: string;
+      bgColor?: string;
+      borderColor?: string;
+    };
   };
-  promoCombos: {
+  promoComboCards?: DynamicPromoComboCard[];
+  promoCombos?: {
     comboBanner: {
       title: string;
       subtitle: string;
@@ -66,6 +120,7 @@ export interface DynamicHomepageData {
       imageSrc: string;
     };
   };
+  trendingProducts?: DynamicTrendingProduct[];
   trendingSettings: {
     title: string;
     subtitle: string;
