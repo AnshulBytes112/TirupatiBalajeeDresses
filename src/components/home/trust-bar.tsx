@@ -11,6 +11,8 @@ import {
 import { Container } from "@/components/layout/container";
 import { cn } from "@/lib/utils";
 
+import { usePreviewDevice } from "@/context/preview-device-context";
+
 const TRUST_PILLARS = [
   {
     icon: <User className="h-5 w-5 sm:h-6 sm:w-6 text-brand-navy-950" strokeWidth={1.5} />,
@@ -40,11 +42,20 @@ const TRUST_PILLARS = [
 ];
 
 export function TrustBar({ className }: { className?: string }) {
+  const previewDevice = usePreviewDevice();
+
+  const gridClass =
+    previewDevice === "mobile"
+      ? "grid-cols-2 gap-2.5"
+      : previewDevice === "tablet"
+      ? "grid-cols-3 gap-3"
+      : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4";
+
   return (
     <section className={cn("pt-4 sm:pt-6", className)}>
       <Container size="xl">
         <div className="rounded-2xl bg-white border border-slate-100/90 py-3 sm:py-4 px-4 sm:px-6 shadow-xs">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 items-center">
+          <div className={cn("grid items-center", gridClass)}>
             {TRUST_PILLARS.map((pillar, idx) => (
               <div
                 key={idx}

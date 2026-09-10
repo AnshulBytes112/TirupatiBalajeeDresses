@@ -34,6 +34,7 @@ import {
   Sliders,
 } from "lucide-react";
 import { Container } from "@/components/layout/container";
+import { SuperAdminNav } from "@/components/admin/super-admin-nav";
 import {
   ALL_PERMISSIONS,
   RBAC_MODULES,
@@ -309,65 +310,8 @@ export default function AdminUsersRBACPage() {
 
   return (
     <div className="min-h-screen bg-[#FAF7F2] text-[#1C1917] pb-16">
-      {/* Top Beige Admin Navigation Bar */}
-      <header className="sticky top-0 z-50 border-b border-[#E5DCD3] bg-[#FAF7F2]/95 backdrop-blur-md px-4 sm:px-6 py-3 shadow-2xs">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#1C1917] text-white font-black text-sm shadow-xs">
-              TB
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-display text-base font-black text-[#1C1917]">
-                  TirupatiBalajee Admin
-                </span>
-                <span className="rounded-md bg-amber-100/90 border border-amber-300/60 px-1.5 py-0.5 text-[10px] font-black text-amber-900 uppercase">
-                  RBAC & Users
-                </span>
-              </div>
-              <p className="text-[11px] text-stone-500 font-semibold">
-                Granular Module Permissions & User Security
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-            {/* Quick Navigation Between Admin Modules */}
-            <Link
-              href="/admin"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-[#E5DCD3] bg-white px-3 py-2 text-xs font-bold text-stone-700 hover:bg-[#F5EFEB] transition-colors shadow-2xs"
-            >
-              <TrendingUp className="h-3.5 w-3.5 text-amber-600" />
-              <span>Deep Analytics</span>
-            </Link>
-
-            <Link
-              href="/admin/homepage"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-[#E5DCD3] bg-white px-3 py-2 text-xs font-bold text-stone-700 hover:bg-[#F5EFEB] transition-colors shadow-2xs"
-            >
-              <Layout className="h-3.5 w-3.5" />
-              <span>Homepage CMS</span>
-            </Link>
-
-            <Link
-              href="/admin/audit-logs"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-[#E5DCD3] bg-white px-3 py-2 text-xs font-bold text-stone-700 hover:bg-[#F5EFEB] transition-colors shadow-2xs"
-            >
-              <Clock className="h-3.5 w-3.5" />
-              <span>Audit Logs</span>
-            </Link>
-
-            <Link
-              href="/"
-              target="_blank"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-[#E5DCD3] bg-white px-3 py-2 text-xs font-bold text-stone-700 hover:bg-[#F5EFEB] transition-colors shadow-2xs"
-            >
-              <ExternalLink className="h-3.5 w-3.5" />
-              <span>Live Site</span>
-            </Link>
-          </div>
-        </div>
-      </header>
+      {/* Shared Super Admin Header & Navigation */}
+      <SuperAdminNav activeTab="users" />
 
       {/* Main Content */}
       <Container size="xl" className="mt-5 space-y-5">

@@ -7,6 +7,8 @@ import { ArrowRight } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { cn } from "@/lib/utils";
 
+import { usePreviewDevice } from "@/context/preview-device-context";
+
 interface CategoryCardItem {
   id: string;
   name: string;
@@ -24,7 +26,7 @@ const CATEGORY_CARDS: CategoryCardItem[] = [
   {
     id: "summer-dress",
     name: "Summer Dress",
-    href: "/category/summer-dress",
+    href: "/shop/school-uniforms/summer-dress",
     badgeEmoji: "☀️",
     subtitleLine1: "Light. Breathable.",
     subtitleLine2: "All-Day Comfort.",
@@ -35,7 +37,7 @@ const CATEGORY_CARDS: CategoryCardItem[] = [
   {
     id: "winter-dress",
     name: "Winter Dress",
-    href: "/category/winter-dress",
+    href: "/shop/school-uniforms/winter-dress",
     badgeEmoji: "❄️",
     subtitleLine1: "Warm. Cozy.",
     subtitleLine2: "Same Great Quality.",
@@ -46,7 +48,7 @@ const CATEGORY_CARDS: CategoryCardItem[] = [
   {
     id: "school-shoes",
     name: "School Shoes",
-    href: "/category/school-shoes",
+    href: "/shop/school-shoes",
     badgeEmoji: "👟",
     subtitleLine1: "Durable. Anti-Skid.",
     subtitleLine2: "Daily Uniform Fit.",
@@ -57,7 +59,7 @@ const CATEGORY_CARDS: CategoryCardItem[] = [
   {
     id: "school-bags",
     name: "School Bags",
-    href: "/category/school-bags",
+    href: "/shop/school-bags",
     badgeEmoji: "🎒",
     subtitleLine1: "Spacious. Sturdy.",
     subtitleLine2: "Ergonomic Straps.",
@@ -68,7 +70,7 @@ const CATEGORY_CARDS: CategoryCardItem[] = [
   {
     id: "socks-stockings",
     name: "Socks & Stockings",
-    href: "/category/socks-stockings",
+    href: "/shop/school-items/socks-stockings",
     badgeEmoji: "🧦",
     subtitleLine1: "Soft Combed Cotton.",
     subtitleLine2: "Snug Everyday Fit.",
@@ -79,7 +81,7 @@ const CATEGORY_CARDS: CategoryCardItem[] = [
   {
     id: "belts-accessories",
     name: "Belts & Accessories",
-    href: "/category/belts-accessories",
+    href: "/shop/school-items/belts-accessories",
     badgeEmoji: "👔",
     subtitleLine1: "Smart Finish.",
     subtitleLine2: "Official Uniform Fit.",
@@ -90,7 +92,7 @@ const CATEGORY_CARDS: CategoryCardItem[] = [
   {
     id: "stationery",
     name: "Stationery",
-    href: "/category/stationery",
+    href: "/shop/school-items/stationery",
     badgeEmoji: "✏️",
     subtitleLine1: "Essential Supplies.",
     subtitleLine2: "Classroom Ready.",
@@ -101,7 +103,7 @@ const CATEGORY_CARDS: CategoryCardItem[] = [
   {
     id: "water-bottles",
     name: "Water Bottles",
-    href: "/category/water-bottles",
+    href: "/shop/school-items/water-bottles",
     badgeEmoji: "💧",
     subtitleLine1: "BPA-Free & Safe.",
     subtitleLine2: "Leak-Proof Daily.",
@@ -120,7 +122,7 @@ const CATEGORY_CARDS: CategoryCardItem[] = [
   {
     id: "lunch-boxes",
     name: "Lunch Boxes",
-    href: "/category/lunch-boxes",
+    href: "/shop/school-items/lunch-boxes",
     badgeEmoji: "🍱",
     subtitleLine1: "Food Grade Steel.",
     subtitleLine2: "Fresh & Organized.",
@@ -144,6 +146,14 @@ interface CategoryGridProps {
 
 export function CategoryGrid({ cards, className }: CategoryGridProps) {
   const activeCards = cards && cards.length > 0 ? cards : CATEGORY_CARDS;
+  const previewDevice = usePreviewDevice();
+
+  const gridClass =
+    previewDevice === "mobile"
+      ? "grid-cols-2 gap-2.5"
+      : previewDevice === "tablet"
+      ? "grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3"
+      : "grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-9 gap-2.5 sm:gap-3 lg:gap-3.5";
 
   return (
     <section className={cn("pt-4 sm:pt-6", className)}>
@@ -162,8 +172,8 @@ export function CategoryGrid({ cards, className }: CategoryGridProps) {
           </Link>
         </div>
 
-        {/* Unified Category Cards Grid: Applied across all 9 items */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-9 gap-2.5 sm:gap-3 lg:gap-3.5 items-stretch">
+        {/* Unified Category Cards Grid: Applied across all items */}
+        <div className={cn("grid items-stretch", gridClass)}>
           {activeCards.map((cat) => (
             <Link
               key={cat.id}

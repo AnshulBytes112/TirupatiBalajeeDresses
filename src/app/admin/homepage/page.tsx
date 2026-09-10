@@ -55,7 +55,6 @@ import {
   DEFAULT_TRENDING_SETTINGS,
 } from "@/repositories/homepage.repository";
 
-// Live Preview Components
 import { HeroCarousel } from "@/components/home/hero-carousel";
 import { CategoryGrid } from "@/components/home/category-grid";
 import { PromoSplit } from "@/components/home/promo-split";
@@ -63,131 +62,10 @@ import { ProductCarouselSection } from "@/components/home/product-carousel-secti
 import { TrustBar } from "@/components/home/trust-bar";
 import { PromoCombos } from "@/components/home/promo-combos";
 import { TrustFooterBadges } from "@/components/home/trust-footer-badges";
-
-// Dedicated Reusable Image Upload & Path Component with Beige Theme
-interface ImageUploadFieldProps {
-  label: string;
-  value: string;
-  onChange: (url: string) => void;
-  adminKey: string;
-  placeholder?: string;
-}
-
-function ImageUploadField({
-  label,
-  value,
-  onChange,
-  adminKey,
-  placeholder = "/images/sample.jpg",
-}: ImageUploadFieldProps) {
-  const [isUploading, setIsUploading] = React.useState(false);
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
-
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setIsUploading(true);
-    const formData = new FormData();
-    formData.append("file", file);
-
-    try {
-      const res = await fetch("/api/admin/homepage/upload", {
-        method: "POST",
-        headers: {
-          "x-admin-key": adminKey,
-        },
-        body: formData,
-      });
-
-      if (res.ok) {
-        const json = await res.json();
-        if (json.data?.url) {
-          onChange(json.data.url);
-          toast.success("Photo uploaded successfully!");
-        }
-      } else {
-        const err = await res.json();
-        toast.error(err.message || "Failed to upload photo");
-      }
-    } catch (err) {
-      toast.error("Network error during photo upload");
-    } finally {
-      setIsUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-    }
-  };
-
-  return (
-    <div className="space-y-1.5">
-      <label className="font-bold text-stone-700 flex items-center justify-between text-xs">
-        <span>{label}</span>
-        {value && (
-          <span className="text-[10px] text-emerald-600 font-semibold flex items-center gap-1">
-            <CheckCircle2 className="h-3 w-3" /> Photo Set
-          </span>
-        )}
-      </label>
-
-      <div className="flex items-center gap-2">
-        {/* Photo Thumbnail Preview */}
-        <div className="relative h-10 w-10 shrink-0 rounded-xl border border-[#E5DCD3] bg-[#FAF7F2] overflow-hidden flex items-center justify-center">
-          {value ? (
-            <Image
-              src={value}
-              alt="Thumbnail"
-              fill
-              className="object-contain p-0.5"
-              onError={(e) => {
-                (e.target as HTMLElement).style.display = "none";
-              }}
-            />
-          ) : (
-            <ImageIcon className="h-4 w-4 text-stone-400" />
-          )}
-        </div>
-
-        {/* Text Input for Path / URL */}
-        <input
-          type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          className="flex-1 rounded-xl border border-[#E5DCD3] bg-[#FAF7F2] px-3 py-2 text-xs text-[#1C1917] font-medium focus:border-[#1C1917] focus:bg-white focus:outline-none"
-        />
-
-        {/* File Upload Button */}
-        <input
-          type="file"
-          ref={fileInputRef}
-          onChange={handleFileUpload}
-          accept="image/*"
-          className="hidden"
-        />
-
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={isUploading}
-          className="inline-flex items-center gap-1.5 rounded-xl bg-[#E5DCD3] hover:bg-[#D5C6B4] text-[#1C1917] px-3 py-2 text-xs font-bold transition-colors shrink-0 disabled:opacity-50"
-          title="Upload image from computer"
-        >
-          {isUploading ? (
-            <>
-              <Loader2 className="h-3.5 w-3.5 animate-spin text-[#1C1917]" />
-              <span className="hidden sm:inline">Uploading...</span>
-            </>
-          ) : (
-            <>
-              <Upload className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Upload Photo</span>
-            </>
-          )}
-        </button>
-      </div>
-    </div>
-  );
-}
+import { PreviewDeviceProvider } from "@/context/preview-device-context";
+import { ImageUploadField } from "@/components/admin/image-upload-field";
+import { SystemUrlSelector } from "@/components/admin/system-url-selector";
+import { SuperAdminNav } from "@/components/admin/super-admin-nav";
 
 export default function AdminHomepageCMS() {
   const [adminKey, setAdminKey] = React.useState<string>("");
@@ -545,66 +423,14 @@ export default function AdminHomepageCMS() {
 
   return (
     <div className="min-h-screen bg-[#FAF7F2] text-[#1C1917] pb-16">
-      {/* Top Beige Admin Navigation Bar */}
-      <header className="sticky top-0 z-50 border-b border-[#E5DCD3] bg-[#FAF7F2]/95 backdrop-blur-md px-4 sm:px-6 py-3 shadow-2xs">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#1C1917] text-white font-black text-sm shadow-xs">
-              TB
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-display text-base font-black text-[#1C1917]">
-                  TirupatiBalajee CMS
-                </span>
-                <span className="rounded-md bg-amber-100/90 border border-amber-300/60 px-1.5 py-0.5 text-[10px] font-black text-amber-900 uppercase">
-                  Super Admin
-                </span>
-              </div>
-              <p className="text-[11px] text-stone-500 font-semibold">
-                Dynamic Homepage & Full Live Preview
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-            {/* Quick Navigation Between Admin Modules */}
-            <Link
-              href="/admin"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-[#E5DCD3] bg-white px-3 py-2 text-xs font-bold text-stone-700 hover:bg-[#F5EFEB] transition-colors shadow-2xs"
-            >
-              <TrendingUp className="h-3.5 w-3.5 text-amber-600" />
-              <span>Deep Analytics</span>
-            </Link>
-
-            <Link
-              href="/admin/users"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-[#E5DCD3] bg-white px-3 py-2 text-xs font-bold text-stone-700 hover:bg-[#F5EFEB] transition-colors shadow-2xs"
-            >
-              <Users className="h-3.5 w-3.5" />
-              <span>Users & RBAC</span>
-            </Link>
-
-            <Link
-              href="/admin/audit-logs"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-[#E5DCD3] bg-white px-3 py-2 text-xs font-bold text-stone-700 hover:bg-[#F5EFEB] transition-colors shadow-2xs"
-            >
-              <Clock className="h-3.5 w-3.5" />
-              <span>Audit Logs</span>
-            </Link>
-
-            <Link
-              href="/"
-              target="_blank"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-[#E5DCD3] bg-white px-3 py-2 text-xs font-bold text-stone-700 hover:bg-[#F5EFEB] transition-colors shadow-2xs"
-            >
-              <ExternalLink className="h-3.5 w-3.5" />
-              <span>Live Site</span>
-            </Link>
-
+      {/* Unified Super-Admin Navigation Bar */}
+      <SuperAdminNav
+        subtitle="Dynamic Homepage CMS & Live Viewport Customizer"
+        actions={
+          <div className="flex items-center gap-2">
             <button
               onClick={handleResetDefaults}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-[#E5DCD3] bg-white px-3 py-2 text-xs font-bold text-stone-700 hover:bg-rose-50 hover:text-rose-700 transition-colors shadow-2xs"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-[#E5DCD3] bg-white px-3 py-1.5 text-xs font-bold text-stone-700 hover:bg-rose-50 hover:text-rose-700 transition-colors shadow-2xs"
             >
               <RotateCcw className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Reset Defaults</span>
@@ -613,7 +439,7 @@ export default function AdminHomepageCMS() {
             <button
               onClick={handleSaveAll}
               disabled={isSaving}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-[#1C1917] px-4 py-2 text-xs font-black text-white hover:bg-stone-800 transition-colors shadow-sm disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-[#1C1917] px-4 py-1.5 text-xs font-black text-white hover:bg-stone-800 transition-colors shadow-sm disabled:opacity-50"
             >
               {isSaving ? (
                 <>
@@ -628,8 +454,8 @@ export default function AdminHomepageCMS() {
               )}
             </button>
           </div>
-        </div>
-      </header>
+        }
+      />
 
       {/* Main CMS Layout */}
       <Container size="xl" className="mt-4 sm:mt-6">
@@ -802,16 +628,12 @@ export default function AdminHomepageCMS() {
                           placeholder="☀️"
                         />
                       </div>
-                      <div className="col-span-2 space-y-1">
-                        <label className="text-[11px] font-bold text-stone-600">Link URL</label>
-                        <input
-                          type="text"
+                      <div className="col-span-2">
+                        <SystemUrlSelector
+                          label="Link Destination"
                           value={card.href || ""}
-                          onChange={(e) =>
-                            updateCategoryCard(idx, { href: e.target.value })
-                          }
-                          className="w-full rounded-xl border border-[#E5DCD3] bg-[#FAF7F2] px-2.5 py-1.5 text-xs font-medium"
-                          placeholder="/category/..."
+                          onChange={(url) => updateCategoryCard(idx, { href: url })}
+                          placeholder="/shop/school-uniforms/..."
                         />
                       </div>
                     </div>
@@ -986,12 +808,11 @@ export default function AdminHomepageCMS() {
                           />
                         </div>
                         <div className="space-y-1">
-                          <label className="text-xs font-bold text-stone-700">CTA Button URL</label>
-                          <input
-                            type="text"
+                          <SystemUrlSelector
+                            label="CTA Button URL"
                             value={slide.ctaUrl}
-                            onChange={(e) => updateHeroSlide(idx, { ctaUrl: e.target.value })}
-                            className="w-full rounded-xl border border-[#E5DCD3] bg-[#FAF7F2] px-3 py-2 text-xs font-medium"
+                            onChange={(url) => updateHeroSlide(idx, { ctaUrl: url })}
+                            placeholder="/shop/..."
                           />
                         </div>
                       </div>
@@ -1155,12 +976,11 @@ export default function AdminHomepageCMS() {
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[11px] font-bold text-stone-600">Button URL</label>
-                      <input
-                        type="text"
+                      <SystemUrlSelector
+                        label="Button Target URL"
                         value={card.ctaUrl}
-                        onChange={(e) => updatePromoSplitCard(idx, { ctaUrl: e.target.value })}
-                        className="w-full rounded-xl border border-[#E5DCD3] bg-[#FAF7F2] px-2.5 py-1.5 text-xs font-medium"
+                        onChange={(url) => updatePromoSplitCard(idx, { ctaUrl: url })}
+                        placeholder="/shop/school-uniforms/..."
                       />
                     </div>
                   </div>
@@ -1309,12 +1129,11 @@ export default function AdminHomepageCMS() {
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[11px] font-bold text-stone-600">CTA URL</label>
-                      <input
-                        type="text"
+                      <SystemUrlSelector
+                        label="CTA URL"
                         value={card.ctaUrl}
-                        onChange={(e) => updatePromoComboCard(idx, { ctaUrl: e.target.value })}
-                        className="w-full rounded-xl border border-[#E5DCD3] bg-[#FAF7F2] px-2.5 py-1.5 text-xs font-medium"
+                        onChange={(url) => updatePromoComboCard(idx, { ctaUrl: url })}
+                        placeholder="/combos or /shop/..."
                       />
                     </div>
                   </div>
@@ -1405,14 +1224,13 @@ export default function AdminHomepageCMS() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-stone-700">View All URL</label>
-                  <input
-                    type="text"
+                  <SystemUrlSelector
+                    label="View All Link"
                     value={trendingSettings.viewAllHref}
-                    onChange={(e) =>
-                      setTrendingSettings({ ...trendingSettings, viewAllHref: e.target.value })
+                    onChange={(url) =>
+                      setTrendingSettings({ ...trendingSettings, viewAllHref: url })
                     }
-                    className="w-full rounded-xl border border-[#E5DCD3] bg-[#FAF7F2] px-3 py-2 text-xs font-medium"
+                    placeholder="/shop"
                   />
                 </div>
               </div>
@@ -1679,20 +1497,22 @@ export default function AdminHomepageCMS() {
                 </div>
 
                 {/* Rendered In-Memory Dynamic Components */}
-                <div className="p-2 sm:p-4 space-y-4">
-                  <HeroCarousel slides={heroSlides} />
-                  <CategoryGrid cards={categoryCards} />
-                  <PromoSplit cards={promoSplitCards} />
-                  <ProductCarouselSection
-                    title={trendingSettings.title}
-                    subtitle={trendingSettings.subtitle}
-                    viewAllHref={trendingSettings.viewAllHref}
-                    dynamicProducts={trendingProducts}
-                  />
-                  <TrustBar />
-                  <PromoCombos cards={promoComboCards} />
-                  <TrustFooterBadges />
-                </div>
+                <PreviewDeviceProvider value={previewDevice}>
+                  <div className="p-2 sm:p-4 space-y-4">
+                    <HeroCarousel slides={heroSlides} />
+                    <CategoryGrid cards={categoryCards} />
+                    <PromoSplit cards={promoSplitCards} />
+                    <ProductCarouselSection
+                      title={trendingSettings.title}
+                      subtitle={trendingSettings.subtitle}
+                      viewAllHref={trendingSettings.viewAllHref}
+                      dynamicProducts={trendingProducts}
+                    />
+                    <TrustBar />
+                    <PromoCombos cards={promoComboCards} />
+                    <TrustFooterBadges />
+                  </div>
+                </PreviewDeviceProvider>
               </div>
             </div>
           </div>

@@ -62,8 +62,18 @@ const nextConfig = {
         permanent: true,
       },
       {
+        source: '/category',
+        destination: '/categories',
+        permanent: true,
+      },
+      {
         source: '/category/:path*',
         destination: '/shop/:path*',
+        permanent: true,
+      },
+      {
+        source: '/categories/:path+',
+        destination: '/shop/:path+',
         permanent: true,
       },
     ];

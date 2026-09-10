@@ -9,6 +9,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { DynamicTrendingProduct } from "@/types/homepage";
 import { cn } from "@/lib/utils";
 
+import { usePreviewDevice } from "@/context/preview-device-context";
+
 export interface ProductItem {
   id: string;
   name: string;
@@ -37,13 +39,21 @@ interface ProductCarouselSectionProps {
 export function ProductCarouselSection({
   title = "Trending Now",
   subtitle = "Most loved products by parents and students alike",
-  viewAllHref = "/products?filter=trending",
+  viewAllHref = "/shop",
   products = [],
   dynamicProducts,
   isLoading = false,
   className,
 }: ProductCarouselSectionProps) {
   const [wishlist, setWishlist] = React.useState<Record<string, boolean>>({});
+  const previewDevice = usePreviewDevice();
+
+  const gridClass =
+    previewDevice === "mobile"
+      ? "grid-cols-2 gap-2.5"
+      : previewDevice === "tablet"
+      ? "grid-cols-3 gap-3"
+      : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3.5";
 
   const toggleWishlist = (id: string, e: React.MouseEvent) => {
     e.preventDefault();
@@ -99,7 +109,7 @@ export function ProductCarouselSection({
 
         {/* Products Grid */}
         {isLoading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3.5">
+          <div className={cn("grid", gridClass)}>
             {Array.from({ length: 6 }).map((_, idx) => (
               <div key={idx} className="rounded-2xl border border-slate-100 bg-white p-3 space-y-2.5">
                 <Skeleton className="aspect-square w-full rounded-xl" />
@@ -109,7 +119,7 @@ export function ProductCarouselSection({
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3.5">
+          <div className={cn("grid", gridClass)}>
             {items.map((item) => {
               const discountPercent =
                 item.mrp && item.sellingPrice && item.mrp > item.sellingPrice

@@ -5,6 +5,8 @@ import { Truck, Banknote, RefreshCcw, Headset, ShieldCheck } from "lucide-react"
 import { Container } from "@/components/layout/container";
 import { cn } from "@/lib/utils";
 
+import { usePreviewDevice } from "@/context/preview-device-context";
+
 const FOOTER_TRUST_ITEMS = [
   {
     icon: <Truck className="h-5 w-5 sm:h-6 sm:w-6 text-brand-navy-950" strokeWidth={1.5} />,
@@ -34,11 +36,20 @@ const FOOTER_TRUST_ITEMS = [
 ];
 
 export function TrustFooterBadges({ className }: { className?: string }) {
+  const previewDevice = usePreviewDevice();
+
+  const gridClass =
+    previewDevice === "mobile"
+      ? "grid-cols-2 gap-2.5"
+      : previewDevice === "tablet"
+      ? "grid-cols-3 gap-3"
+      : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4";
+
   return (
     <section className={cn("pt-6 sm:pt-8 pb-4", className)}>
       <Container size="xl">
         <div className="border-t border-b border-slate-200/70 py-4 sm:py-5">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+          <div className={cn("grid", gridClass)}>
             {FOOTER_TRUST_ITEMS.map((item, idx) => (
               <div
                 key={idx}

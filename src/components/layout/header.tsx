@@ -39,7 +39,6 @@ export function Header() {
     e.preventDefault();
     const trimmed = searchQuery.trim();
     if (!trimmed) {
-      router.push("/shop");
       return;
     }
     router.push(`/shop?q=${encodeURIComponent(trimmed)}`);

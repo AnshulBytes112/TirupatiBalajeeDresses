@@ -8,6 +8,8 @@ import { Container } from "@/components/layout/container";
 import { DynamicPromoComboCard } from "@/types/homepage";
 import { cn } from "@/lib/utils";
 
+import { usePreviewDevice } from "@/context/preview-device-context";
+
 interface PromoCombosProps {
   cards?: DynamicPromoComboCard[];
   comboBanner?: {
@@ -34,6 +36,9 @@ export function PromoCombos({
   thermalsBanner,
   className,
 }: PromoCombosProps) {
+  const previewDevice = usePreviewDevice();
+  const isMobile = previewDevice === "mobile";
+
   const items: DynamicPromoComboCard[] = React.useMemo(() => {
     if (cards && cards.length > 0) {
       return cards.filter((c) => c.isActive !== false);
@@ -59,7 +64,7 @@ export function PromoCombos({
           thermalsBanner?.subtitle ||
           "Ultra-soft thermal innerwear designed for winter school days.",
         ctaText: thermalsBanner?.ctaText || "EXPLORE NOW",
-        ctaUrl: thermalsBanner?.ctaUrl || "/category/thermals",
+        ctaUrl: thermalsBanner?.ctaUrl || "/shop/thermals",
         imageSrc: thermalsBanner?.imageSrc || "/images/thermals-stack.jpg",
         bgColor: "#FDF2F4",
         borderColor: "#FCE1E6",
@@ -70,19 +75,21 @@ export function PromoCombos({
 
   if (items.length === 0) return null;
 
+  const gridClass =
+    previewDevice === "mobile"
+      ? "grid-cols-1 gap-3"
+      : previewDevice === "tablet"
+      ? "grid-cols-1 md:grid-cols-2 gap-3"
+      : items.length === 1
+      ? "grid-cols-1"
+      : items.length === 2
+      ? "grid-cols-1 lg:grid-cols-2"
+      : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3";
+
   return (
     <section className={cn("pt-4 sm:pt-6", className)}>
       <Container size="xl">
-        <div
-          className={cn(
-            "grid gap-3 sm:gap-4",
-            items.length === 1
-              ? "grid-cols-1"
-              : items.length === 2
-              ? "grid-cols-1 lg:grid-cols-2"
-              : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
-          )}
-        >
+        <div className={cn("grid gap-3 sm:gap-4", gridClass)}>
           {items.map((item) => {
             const isImageLeft = item.layout !== "image-right";
 
@@ -94,8 +101,11 @@ export function PromoCombos({
                   borderColor: item.borderColor || "#C6E4FA",
                 }}
                 className={cn(
-                  "relative overflow-hidden rounded-2xl sm:rounded-3xl border p-5 sm:p-7 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4 min-h-[200px] transition-transform hover:-translate-y-0.5 duration-200",
-                  !isImageLeft && "sm:flex-row-reverse"
+                  "relative overflow-hidden rounded-2xl sm:rounded-3xl border shadow-xs flex items-center justify-between gap-3 sm:gap-4 min-h-[190px] sm:min-h-[200px] transition-transform hover:-translate-y-0.5 duration-200",
+                  isMobile
+                    ? "p-4 flex-col"
+                    : "p-5 sm:p-7 flex-col sm:flex-row",
+                  !isImageLeft && !isMobile && "sm:flex-row-reverse"
                 )}
               >
                 {/* Photo */}

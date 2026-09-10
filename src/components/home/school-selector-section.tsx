@@ -6,6 +6,8 @@ import { Search, GraduationCap, ArrowRight, MapPin } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { cn } from "@/lib/utils";
 
+import { usePreviewDevice } from "@/context/preview-device-context";
+
 export interface SchoolItem {
   id: string;
   name: string;
@@ -77,6 +79,7 @@ export function SchoolSelectorSection({
   className,
 }: SchoolSelectorSectionProps) {
   const [searchTerm, setSearchTerm] = React.useState("");
+  const previewDevice = usePreviewDevice();
 
   const displaySchools = schools.length > 0 ? schools : DEFAULT_SCHOOLS;
 
@@ -86,6 +89,13 @@ export function SchoolSelectorSection({
       s.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (s.board && s.board.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  const gridClass =
+    previewDevice === "mobile"
+      ? "grid-cols-1 gap-3"
+      : previewDevice === "tablet"
+      ? "grid-cols-1 sm:grid-cols-2 gap-3"
+      : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4";
 
   return (
     <section className={cn("pt-6 sm:pt-10", className)}>
@@ -124,7 +134,7 @@ export function SchoolSelectorSection({
           </div>
 
           {/* Schools Grid */}
-          <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 pt-6">
+          <div className={cn("relative z-10 grid pt-6", gridClass)}>
             {filtered.slice(0, 6).map((school) => (
               <Link
                 key={school.id}

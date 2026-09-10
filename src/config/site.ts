@@ -26,7 +26,7 @@ export const siteConfig = {
     { label: "ALL PRODUCTS", href: "/categories" },
     { label: "BY SCHOOL", href: "/#schools" },
     { label: "TOP BRANDS", href: "/#brands" },
-    { label: "OFFERS", href: "/category/offers", isSpecial: true },
+    { label: "OFFERS", href: "/shop/school-uniforms?discount=20", isSpecial: true },
   ],
   trustFeatures: [
     {

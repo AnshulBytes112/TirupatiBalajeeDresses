@@ -23,6 +23,7 @@ import {
   Package,
 } from "lucide-react";
 import { Container } from "@/components/layout/container";
+import { SuperAdminNav } from "@/components/admin/super-admin-nav";
 
 interface ShippingZone {
   id: string;
@@ -221,16 +222,9 @@ export default function AdminShippingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 py-8 text-slate-900">
-      <Container size="lg">
-        {/* Breadcrumb Navigation */}
-        <div className="mb-6 flex items-center gap-2 text-xs font-medium text-slate-500">
-          <Link href="/admin" className="hover:text-blue-900">
-            Super Admin
-          </Link>
-          <ChevronRight className="h-3 w-3" />
-          <span className="text-slate-900 font-semibold">Shipping & Delivery Management</span>
-        </div>
+    <div className="min-h-screen bg-[#FAF7F2] pb-16 text-[#1C1917]">
+      <SuperAdminNav activeTab="shipping" />
+      <Container size="lg" className="pt-6">
 
         {/* Header Section */}
         <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-center">

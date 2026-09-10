@@ -31,6 +31,8 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { Container } from "@/components/layout/container";
+import { ImageUploadField } from "@/components/admin/image-upload-field";
+import { SuperAdminNav } from "@/components/admin/super-admin-nav";
 
 interface CategoryItem {
   id: string;
@@ -301,91 +303,18 @@ export default function AdminCategoriesPage() {
   return (
     <div className="min-h-screen bg-[#FAF7F2] text-[#1C1917] pb-24">
       {/* Super-Admin Header & Navigation */}
-      <header className="sticky top-0 z-40 border-b border-[#E5DCD3] bg-white/95 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8 py-3">
-          <div className="flex items-center gap-3 sm:gap-4">
-            <Link
-              href="/admin"
-              className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1C1917] text-white shadow-xs"
-            >
-              <Shield className="h-5 w-5 text-amber-400" />
-            </Link>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm sm:text-base font-black tracking-tight text-[#1C1917]">
-                  TirupatiBalajee Admin Suite
-                </span>
-                <span className="rounded-md bg-amber-100 px-2 py-0.5 text-[10px] font-black uppercase text-amber-900">
-                  Super Admin
-                </span>
-              </div>
-              <p className="text-[11px] text-[#78716C]">
-                Dynamic Category &amp; Taxonomy Architecture Manager
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 sm:gap-3">
-            <button
-              onClick={() => handleOpenCreateModal()}
-              className="flex items-center gap-1.5 rounded-xl bg-brand-navy-950 px-3.5 py-2 text-xs font-black text-white hover:bg-brand-navy-800 transition-colors shadow-xs"
-            >
-              <Plus className="h-4 w-4 text-brand-yellow-400" />
-              <span>New Category</span>
-            </button>
-
-            <Link
-              href="/"
-              target="_blank"
-              className="flex items-center gap-1 rounded-xl border border-[#D6C7B2] bg-white px-3 py-2 text-xs font-bold text-[#1C1917] hover:bg-[#FAF7F2] transition-colors"
-            >
-              <span>Live Store</span>
-              <ExternalLink className="h-3.5 w-3.5 text-slate-400" />
-            </Link>
-          </div>
-        </div>
-
-        {/* Global Admin Navigation Tabs */}
-        <div className="border-t border-[#E5DCD3] bg-[#FAF7F2] px-4 sm:px-6 lg:px-8 overflow-x-auto no-scrollbar">
-          <nav className="mx-auto flex max-w-7xl items-center gap-2 sm:gap-4 py-2 text-xs font-bold">
-            <Link
-              href="/admin"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[#78716C] hover:text-[#1C1917] hover:bg-white/60 transition-colors"
-            >
-              <TrendingUp className="h-3.5 w-3.5" />
-              <span>Analytics &amp; Sales</span>
-            </Link>
-            <Link
-              href="/admin/categories"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white text-[#1C1917] shadow-2xs font-black"
-            >
-              <FolderTree className="h-3.5 w-3.5 text-brand-navy-950" />
-              <span>Category Manager</span>
-            </Link>
-            <Link
-              href="/admin/homepage"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[#78716C] hover:text-[#1C1917] hover:bg-white/60 transition-colors"
-            >
-              <Layout className="h-3.5 w-3.5" />
-              <span>Homepage Customizer</span>
-            </Link>
-            <Link
-              href="/admin/users"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[#78716C] hover:text-[#1C1917] hover:bg-white/60 transition-colors"
-            >
-              <Users className="h-3.5 w-3.5" />
-              <span>User Roles</span>
-            </Link>
-            <Link
-              href="/admin/audit-logs"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[#78716C] hover:text-[#1C1917] hover:bg-white/60 transition-colors"
-            >
-              <Clock className="h-3.5 w-3.5" />
-              <span>Audit Trail</span>
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <SuperAdminNav
+        subtitle="Dynamic Category & Taxonomy Architecture Manager"
+        actions={
+          <button
+            onClick={() => handleOpenCreateModal()}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-brand-navy-950 px-3.5 py-1.5 text-xs font-black text-white hover:bg-brand-navy-800 transition-colors shadow-xs"
+          >
+            <Plus className="h-3.5 w-3.5 text-brand-yellow-400" />
+            <span>New Category</span>
+          </button>
+        }
+      />
 
       {/* Main Content */}
       <Container className="pt-6 sm:pt-8 max-w-7xl">
@@ -726,19 +655,15 @@ export default function AdminCategoriesPage() {
                 />
               </div>
 
-              {/* Image URL */}
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-                  Hero Image / Thumbnail URL
-                </label>
-                <input
-                  type="text"
-                  value={formData.imageUrl}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, imageUrl: e.target.value }))}
-                  placeholder="https://images.unsplash.com/photo-..."
-                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm text-slate-900 focus:border-brand-navy-900 focus:outline-hidden"
-                />
-              </div>
+              {/* Image Upload & URL */}
+              <ImageUploadField
+                label="Category Photo / Thumbnail (Upload or URL)"
+                value={formData.imageUrl}
+                onChange={(url) => setFormData((prev) => ({ ...prev, imageUrl: url }))}
+                adminKey={adminKey}
+                placeholder="Upload photo file or paste image URL..."
+                helpText="Upload a category photo (JPG, PNG, WebP) or paste an image URL. Shows instant preview thumbnail."
+              />
 
               {/* Display Order & Is Active */}
               <div className="grid grid-cols-2 gap-4">

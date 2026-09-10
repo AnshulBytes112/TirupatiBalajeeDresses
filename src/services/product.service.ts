@@ -1,7 +1,22 @@
 import { productRepository } from "@/repositories/product.repository";
 import { GetProductsQuery } from "@/validations/product.schema";
-import { NotFoundError } from "@/lib/errors";
+import {
+  AdminProductsQuery,
+  CreateProductInput,
+  UpdateProductInput,
+} from "@/validations/admin-product.schema";
+import { NotFoundError, BadRequestError } from "@/lib/errors";
 import { Prisma } from "@prisma/client";
+
+function slugify(text: string): string {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/[^\w\-]+/g, "")
+    .replace(/\-\-+/g, "-");
+}
 
 type ProductWithRelations = Prisma.ProductGetPayload<{
   include: {
@@ -370,6 +385,274 @@ export class ProductService {
   async getFilterAggregations() {
     return productRepository.getFilterAggregations();
   }
+
+  // ==========================================
+  // SUPER ADMIN METHODS
+  // ==========================================
+
+  async adminGetProducts(query: AdminProductsQuery) {
+    const result = await productRepository.adminFindMany(query);
+
+    const items = result.products.map((p) => {
+      const primaryImage = p.images.find((img) => img.isPrimary) || p.images[0];
+      const totalStock = p.variants.reduce((acc, v) => acc + (v.inventory?.availableQuantity ?? 0), 0);
+      const isLowStock = p.variants.some(
+        (v) => (v.inventory?.availableQuantity ?? 0) <= (v.inventory?.lowStockThreshold ?? 5)
+      );
+
+      const minPrice = p.variants.length > 0
+        ? Math.min(...p.variants.map((v) => Number(v.sellingPrice)))
+        : Number(p.sellingPrice);
+      const maxPrice = p.variants.length > 0
+        ? Math.max(...p.variants.map((v) => Number(v.sellingPrice)))
+        : Number(p.sellingPrice);
+
+      return {
+        id: p.id,
+        name: p.name,
+        slug: p.slug,
+        sku: p.sku,
+        mrp: Number(p.mrp),
+        sellingPrice: Number(p.sellingPrice),
+        priceRange: minPrice === maxPrice ? `₹${minPrice}` : `₹${minPrice} - ₹${maxPrice}`,
+        status: p.status,
+        isActive: p.isActive,
+        isFeatured: p.isFeatured,
+        isBestseller: p.isBestseller,
+        category: {
+          id: p.category.id,
+          name: p.category.name,
+          slug: p.category.slug,
+        },
+        subcategory: p.subcategory
+          ? {
+              id: p.subcategory.id,
+              name: p.subcategory.name,
+              slug: p.subcategory.slug,
+            }
+          : null,
+        brand: p.brand
+          ? {
+              id: p.brand.id,
+              name: p.brand.name,
+              slug: p.brand.slug,
+            }
+          : null,
+        primaryImage: primaryImage?.url || "/images/shirt.jpg",
+        imagesCount: p.images.length,
+        variantsCount: p.variants.length,
+        totalStock,
+        isLowStock,
+        schools: p.schoolUniforms.map((su) => ({
+          id: su.school.id,
+          name: su.school.name,
+          slug: su.school.slug,
+          season: su.season,
+          gender: su.gender,
+        })),
+        reviewsCount: p._count.reviews,
+        createdAt: p.createdAt,
+        updatedAt: p.updatedAt,
+      };
+    });
+
+    return {
+      items,
+      pagination: {
+        total: result.total,
+        page: result.page,
+        limit: result.limit,
+        totalPages: result.totalPages,
+        hasNextPage: result.page < result.totalPages,
+        hasPrevPage: result.page > 1,
+      },
+    };
+  }
+
+  async adminGetProductById(id: string) {
+    const p = await productRepository.adminFindById(id);
+    if (!p) {
+      throw new NotFoundError(`Product with ID '${id}'`);
+    }
+
+    return {
+      id: p.id,
+      name: p.name,
+      slug: p.slug,
+      sku: p.sku,
+      description: p.description,
+      fabricDetails: p.fabricDetails,
+      careInstructions: p.careInstructions,
+      mrp: Number(p.mrp),
+      sellingPrice: Number(p.sellingPrice),
+      status: p.status,
+      isActive: p.isActive,
+      isFeatured: p.isFeatured,
+      isBestseller: p.isBestseller,
+      seoTitle: p.seoTitle,
+      seoDescription: p.seoDescription,
+      categoryId: p.categoryId,
+      subcategoryId: p.subcategoryId,
+      brandId: p.brandId,
+      category: p.category,
+      subcategory: p.subcategory,
+      brand: p.brand,
+      images: p.images.map((img) => ({
+        id: img.id,
+        url: img.url,
+        alt: img.alt,
+        displayOrder: img.displayOrder,
+        isPrimary: img.isPrimary,
+      })),
+      variants: p.variants.map((v) => ({
+        id: v.id,
+        size: v.size,
+        color: v.color,
+        sku: v.sku,
+        mrp: v.mrp ? Number(v.mrp) : Number(p.mrp),
+        sellingPrice: Number(v.sellingPrice),
+        priceOverride: v.priceOverride ? Number(v.priceOverride) : null,
+        isAvailable: v.isAvailable,
+        inventory: v.inventory
+          ? {
+              id: v.inventory.id,
+              availableQuantity: v.inventory.availableQuantity,
+              reservedQuantity: v.inventory.reservedQuantity,
+              lowStockThreshold: v.inventory.lowStockThreshold,
+              warehouseLocation: v.inventory.warehouseLocation,
+            }
+          : {
+              availableQuantity: 0,
+              reservedQuantity: 0,
+              lowStockThreshold: 5,
+              warehouseLocation: null,
+            },
+      })),
+      schools: p.schoolUniforms.map((su) => ({
+        id: su.id,
+        schoolId: su.school.id,
+        schoolName: su.school.name,
+        schoolSlug: su.school.slug,
+        season: su.season,
+        gender: su.gender,
+        classGrade: su.classGrade,
+        uniformType: su.uniformType,
+        isCompulsory: su.isCompulsory,
+      })),
+      createdAt: p.createdAt,
+      updatedAt: p.updatedAt,
+    };
+  }
+
+  async createProduct(data: CreateProductInput) {
+    // 1. Generate unique slug
+    let generatedSlug = data.slug ? slugify(data.slug) : slugify(data.name);
+    let existingWithSlug = await productRepository.findBySlug(generatedSlug);
+    if (existingWithSlug) {
+      generatedSlug = `${generatedSlug}-${Date.now().toString().slice(-4)}`;
+    }
+
+    // 2. Check SKU uniqueness
+    const existingWithSku = await productRepository.findBySku(data.sku);
+    if (existingWithSku) {
+      throw new BadRequestError(`Product with SKU '${data.sku}' already exists.`);
+    }
+
+    // 3. Check variant SKU uniqueness
+    if (data.variants && data.variants.length > 0) {
+      const variantSkus = new Set<string>();
+      for (const v of data.variants) {
+        if (variantSkus.has(v.sku)) {
+          throw new BadRequestError(`Duplicate variant SKU '${v.sku}' inside product.`);
+        }
+        variantSkus.add(v.sku);
+
+        const existingVar = await productRepository.findVariantBySku(v.sku);
+        if (existingVar) {
+          throw new BadRequestError(`Variant SKU '${v.sku}' is already in use by another product.`);
+        }
+      }
+    }
+
+    return productRepository.create({
+      ...data,
+      slug: generatedSlug,
+    });
+  }
+
+  async updateProduct(id: string, data: UpdateProductInput) {
+    const existing = await productRepository.findById(id);
+    if (!existing) {
+      throw new NotFoundError(`Product with ID '${id}'`);
+    }
+
+    // 1. Slug uniqueness if changing slug
+    let nextSlug: string | undefined = undefined;
+    if (data.slug) {
+      nextSlug = slugify(data.slug);
+      if (nextSlug !== existing.slug) {
+        const conflict = await productRepository.findBySlug(nextSlug);
+        if (conflict && conflict.id !== id) {
+          throw new BadRequestError(`Slug '${nextSlug}' is already in use.`);
+        }
+      }
+    }
+
+    // 2. SKU uniqueness if changing SKU
+    if (data.sku && data.sku !== existing.sku) {
+      const skuConflict = await productRepository.findBySku(data.sku);
+      if (skuConflict && skuConflict.id !== id) {
+        throw new BadRequestError(`SKU '${data.sku}' is already in use.`);
+      }
+    }
+
+    // 3. Variant SKU uniqueness check
+    if (data.variants && data.variants.length > 0) {
+      const variantSkus = new Set<string>();
+      for (const v of data.variants) {
+        if (variantSkus.has(v.sku)) {
+          throw new BadRequestError(`Duplicate variant SKU '${v.sku}' inside product payload.`);
+        }
+        variantSkus.add(v.sku);
+
+        const existingVar = await productRepository.findVariantBySku(v.sku);
+        if (existingVar && existingVar.productId !== id) {
+          throw new BadRequestError(`Variant SKU '${v.sku}' is already in use by another product.`);
+        }
+      }
+    }
+
+    return productRepository.update(id, {
+      ...data,
+      slug: nextSlug,
+    });
+  }
+
+  async archiveProduct(id: string) {
+    const existing = await productRepository.findById(id);
+    if (!existing) {
+      throw new NotFoundError(`Product with ID '${id}'`);
+    }
+    return productRepository.archive(id);
+  }
+
+  async restoreProduct(id: string) {
+    const existing = await productRepository.findById(id);
+    if (!existing) {
+      throw new NotFoundError(`Product with ID '${id}'`);
+    }
+    return productRepository.restore(id);
+  }
+
+  async deleteProduct(id: string) {
+    const existing = await productRepository.findById(id);
+    if (!existing) {
+      throw new NotFoundError(`Product with ID '${id}'`);
+    }
+    // Safe soft delete to prevent breaking past order references
+    return productRepository.softDelete(id);
+  }
 }
 
 export const productService = new ProductService();
+
