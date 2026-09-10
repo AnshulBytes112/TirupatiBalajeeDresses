@@ -11,6 +11,8 @@ import {
 } from "@/lib/auth/user-onboarding";
 import { Role } from "@prisma/client";
 
+export const dynamic = "force-dynamic";
+
 interface RouteParams {
   params: { id: string };
 }

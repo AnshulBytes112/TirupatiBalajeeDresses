@@ -13,6 +13,8 @@ import {
 import { getRoleDefaultPermissions } from "@/lib/auth/rbac-permissions";
 import { Role } from "@prisma/client";
 
+export const dynamic = "force-dynamic";
+
 /**
  * GET /api/admin/users
  * Returns list of users with search, role filter, status filter, and pagination

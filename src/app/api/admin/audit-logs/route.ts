@@ -4,6 +4,8 @@ import { verifySuperAdmin } from "@/lib/auth/admin-guard";
 import { successResponse, errorResponse } from "@/lib/api-response";
 import { UnauthorizedError } from "@/lib/errors";
 
+export const dynamic = "force-dynamic";
+
 /**
  * GET /api/admin/audit-logs
  * Returns paginated audit logs with search, user filter, module filter, and action filter

@@ -23,11 +23,10 @@ export const siteConfig = {
     { label: "Find a Store", href: "/stores" },
   ],
   navLinks: [
-    { label: "SCHOOL UNIFORMS", href: "/category/school-uniforms" },
-    { label: "THERMALS", href: "/category/thermals" },
-    { label: "SCHOOL ITEMS", href: "/category/school-items" },
-    { label: "BRANDS", href: "/brands" },
-    { label: "OFFERS", href: "/offers", isSpecial: true },
+    { label: "ALL PRODUCTS", href: "/categories" },
+    { label: "BY SCHOOL", href: "/#schools" },
+    { label: "TOP BRANDS", href: "/#brands" },
+    { label: "OFFERS", href: "/category/offers", isSpecial: true },
   ],
   trustFeatures: [
     {

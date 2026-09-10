@@ -248,6 +248,10 @@ export class ProductService {
       imageUrl: p.images[0]?.url || `/images/products/${p.slug}.png`,
     }));
   }
+
+  async getFilterAggregations() {
+    return productRepository.getFilterAggregations();
+  }
 }
 
 export const productService = new ProductService();

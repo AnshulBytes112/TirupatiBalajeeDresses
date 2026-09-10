@@ -12,17 +12,18 @@ export interface NavItem {
 }
 
 const SECONDARY_NAV_ITEMS: NavItem[] = [
-  { label: "ALL", href: "/" },
+  { label: "ALL", href: "/categories" },
+  { label: "SUMMER DRESS", href: "/category/summer-dress" },
+  { label: "WINTER DRESS", href: "/category/winter-dress" },
   { label: "SCHOOL UNIFORMS", href: "/category/school-uniforms" },
   { label: "THERMALS", href: "/category/thermals" },
   { label: "SCHOOL SHOES", href: "/category/school-shoes" },
   { label: "BAGS", href: "/category/school-bags" },
   { label: "STATIONERY", href: "/category/stationery" },
   { label: "ACCESSORIES", href: "/category/belts-accessories" },
-  { label: "LUNCH BOXES", href: "/category/lunch-boxes" },
-  { label: "WATER BOTTLES", href: "/category/water-bottles" },
-  { label: "COMBOS", href: "/combos" },
-  { label: "OFFERS", href: "/offers", isSpecial: true },
+  { label: "LUNCH BOXES", href: "/category/lunch-boxes-bottles" },
+  { label: "COMBOS", href: "/category/combos" },
+  { label: "OFFERS", href: "/category/offers", isSpecial: true },
 ];
 
 interface SecondaryNavProps {
@@ -32,11 +33,13 @@ interface SecondaryNavProps {
 }
 
 export function SecondaryNav({
-  activeCategory = "ALL",
+  activeCategory,
   onSelectCategory,
   className,
 }: SecondaryNavProps) {
   const pathname = usePathname();
+  const isSummer = pathname.includes("summer");
+  const isWinter = pathname.includes("winter");
 
   return (
     <div
@@ -52,8 +55,12 @@ export function SecondaryNav({
         >
           {SECONDARY_NAV_ITEMS.map((item) => {
             const isMatch =
-              item.label === activeCategory ||
-              (item.href === "/" && pathname === "/" && activeCategory === "ALL");
+              (item.href === "/category/summer-dress" && isSummer) ||
+              (item.href === "/category/winter-dress" && isWinter) ||
+              (item.href === "/category/school-uniforms" && (pathname === "/category/school-uniforms" || pathname === "/school-uniforms") && !isSummer && !isWinter) ||
+              (item.href === "/categories" && (pathname === "/categories" || pathname === "/category")) ||
+              (item.label === activeCategory) ||
+              (!isSummer && !isWinter && item.href !== "/categories" && (pathname === item.href || pathname.startsWith(item.href)));
 
             return (
               <Link
