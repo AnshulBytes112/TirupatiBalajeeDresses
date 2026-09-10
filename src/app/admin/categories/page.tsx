@@ -29,10 +29,13 @@ import {
   Users,
   Clock,
   ArrowRight,
+  UploadCloud,
+  FileSpreadsheet,
 } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { ImageUploadField } from "@/components/admin/image-upload-field";
 import { SuperAdminNav } from "@/components/admin/super-admin-nav";
+import { BulkImportModal } from "@/components/admin/bulk-import-modal";
 
 interface CategoryItem {
   id: string;
@@ -56,6 +59,7 @@ export default function AdminCategoriesPage() {
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
   const [categories, setCategories] = React.useState<CategoryItem[]>([]);
   const [searchQuery, setSearchQuery] = React.useState<string>("");
+  const [isBulkImportOpen, setIsBulkImportOpen] = React.useState<boolean>(false);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = React.useState<boolean>(false);
@@ -306,13 +310,22 @@ export default function AdminCategoriesPage() {
       <SuperAdminNav
         subtitle="Dynamic Category & Taxonomy Architecture Manager"
         actions={
-          <button
-            onClick={() => handleOpenCreateModal()}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-brand-navy-950 px-3.5 py-1.5 text-xs font-black text-white hover:bg-brand-navy-800 transition-colors shadow-xs"
-          >
-            <Plus className="h-3.5 w-3.5 text-brand-yellow-400" />
-            <span>New Category</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsBulkImportOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-[#D6C7B2] bg-white px-3 py-1.5 text-xs font-bold text-stone-800 hover:bg-[#F5EFEB] transition-colors shadow-2xs cursor-pointer"
+            >
+              <UploadCloud className="h-3.5 w-3.5 text-amber-600" />
+              <span>Bulk CSV Import</span>
+            </button>
+            <button
+              onClick={() => handleOpenCreateModal()}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-brand-navy-950 px-3.5 py-1.5 text-xs font-black text-white hover:bg-brand-navy-800 transition-colors shadow-xs cursor-pointer"
+            >
+              <Plus className="h-3.5 w-3.5 text-brand-yellow-400" />
+              <span>New Category</span>
+            </button>
+          </div>
         }
       />
 
@@ -719,6 +732,15 @@ export default function AdminCategoriesPage() {
           </div>
         </div>
       )}
+
+      {/* Bulk CSV Import Modal */}
+      <BulkImportModal
+        isOpen={isBulkImportOpen}
+        onClose={() => setIsBulkImportOpen(false)}
+        type="categories"
+        adminKey={adminKey}
+        onSuccess={fetchCategories}
+      />
     </div>
   );
 }

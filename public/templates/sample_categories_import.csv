@@ -1,0 +1,8 @@
+name,slug,parentSlug,description,imageUrl,displayOrder,isActive
+School Uniforms,school-uniforms,,Complete school uniforms for all boards and seasons,/images/categories/uniforms.jpg,1,true
+Summer Dress,summer-dress,school-uniforms,Breathable cotton blend regular summer uniforms,/images/categories/summer.jpg,1,true
+Winter Dress,winter-dress,school-uniforms,Warm blazers sweaters cardigans and thermal wear,/images/categories/winter.jpg,2,true
+Sports & House PT,sports-house-pt,school-uniforms,Tracksuits PT t-shirts and sports shorts,/images/categories/sports.jpg,3,true
+School Shoes,school-shoes,,Durable leather and canvas school footwear,/images/categories/shoes.jpg,2,true
+School Bags & Bottles,school-bags-bottles,,Ergonomic backpacks lunch boxes and stainless steel bottles,/images/categories/bags.jpg,3,true
+Stationery & Books,stationery-books,,Notebooks geometry boxes and art supplies,/images/categories/stationery.jpg,4,true

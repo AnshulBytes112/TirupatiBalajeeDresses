@@ -40,6 +40,7 @@ import {
 import { Container } from "@/components/layout/container";
 import { SuperAdminNav } from "@/components/admin/super-admin-nav";
 import { ImageUploadField } from "@/components/admin/image-upload-field";
+import { BulkImportModal } from "@/components/admin/bulk-import-modal";
 
 interface ProductListItem {
   id: string;
@@ -147,6 +148,7 @@ export default function AdminProductsPage() {
 
   // Modal / Form State
   const [isModalOpen, setIsModalOpen] = React.useState<boolean>(false);
+  const [isBulkImportOpen, setIsBulkImportOpen] = React.useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const [editingProductId, setEditingProductId] = React.useState<string | null>(null);
   const [activeFormTab, setActiveFormTab] = React.useState<"basic" | "variants" | "images" | "schools">("basic");
@@ -647,6 +649,14 @@ export default function AdminProductsPage() {
 
           <div className="flex items-center gap-2">
             <button
+              onClick={() => setIsBulkImportOpen(true)}
+              className="inline-flex items-center gap-2 rounded-2xl border border-[#D6C7B2] bg-white px-4 py-2.5 text-xs font-bold text-stone-800 hover:bg-[#FAF7F2] shadow-2xs transition-all active:scale-98 cursor-pointer"
+            >
+              <UploadCloud className="h-4 w-4 text-amber-600" />
+              <span>Bulk CSV Import</span>
+            </button>
+
+            <button
               onClick={handleOpenCreateModal}
               className="inline-flex items-center gap-2 rounded-2xl bg-[#1C1917] px-4 py-2.5 text-xs font-black text-white hover:bg-stone-800 shadow-xs transition-all active:scale-98 cursor-pointer"
             >
@@ -657,7 +667,7 @@ export default function AdminProductsPage() {
             <button
               onClick={fetchProducts}
               disabled={isLoading}
-              className="p-2.5 rounded-2xl border border-[#E5DCD3] bg-[#FAF7F2] text-stone-700 hover:bg-white transition-colors"
+              className="p-2.5 rounded-2xl border border-[#E5DCD3] bg-[#FAF7F2] text-stone-700 hover:bg-white transition-colors cursor-pointer"
               title="Refresh Products"
             >
               <RotateCcw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
@@ -1560,6 +1570,15 @@ export default function AdminProductsPage() {
           </div>
         </div>
       )}
+
+      {/* Bulk CSV Import Modal */}
+      <BulkImportModal
+        isOpen={isBulkImportOpen}
+        onClose={() => setIsBulkImportOpen(false)}
+        type="products"
+        adminKey={adminKey}
+        onSuccess={fetchProducts}
+      />
     </div>
   );
 }
