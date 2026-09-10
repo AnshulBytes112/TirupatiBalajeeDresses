@@ -9,6 +9,11 @@ import { cn } from "@/lib/utils";
 export function MobileBottomNav() {
   const pathname = usePathname();
 
+  // Hide general bottom nav on Product Detail Pages and Admin pages to give full priority to PDP CTA
+  if (pathname?.startsWith("/product/") || pathname?.startsWith("/admin")) {
+    return null;
+  }
+
   const navItems = [
     { label: "Home", href: "/", icon: Home },
     { label: "Categories", href: "/categories", icon: LayoutGrid },

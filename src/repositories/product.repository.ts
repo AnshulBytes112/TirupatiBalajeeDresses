@@ -605,6 +605,119 @@ export class ProductRepository extends BaseRepository {
       },
     });
   }
+
+  async findRelatedProducts(productId: string, categoryId: string, schoolId?: string | null, limit = 8) {
+    const where: Prisma.ProductWhereInput = {
+      id: { not: productId },
+      isActive: true,
+      isDeleted: false,
+      OR: [
+        { categoryId },
+        { subcategoryId: categoryId },
+        ...(schoolId
+          ? [
+              {
+                schoolUniforms: {
+                  some: { schoolId },
+                },
+              },
+            ]
+          : []),
+      ],
+    };
+
+    const products = await this.db.product.findMany({
+      where,
+      take: limit,
+      orderBy: [{ isBestseller: "desc" }, { rating: "desc" }],
+      include: {
+        category: true,
+        subcategory: true,
+        brand: true,
+        images: { orderBy: { displayOrder: "asc" } },
+        variants: {
+          where: { isDeleted: false },
+          include: { inventory: true },
+        },
+        schoolUniforms: {
+          include: { school: true },
+        },
+        reviews: {
+          where: { status: "APPROVED" },
+          select: { rating: true },
+        },
+      },
+    });
+
+    // If fewer than limit found, backfill with top bestsellers
+    if (products.length < limit) {
+      const existingIds = [productId, ...products.map((p) => p.id)];
+      const backfill = await this.db.product.findMany({
+        where: {
+          id: { notIn: existingIds },
+          isActive: true,
+          isDeleted: false,
+        },
+        take: limit - products.length,
+        orderBy: [{ isBestseller: "desc" }, { isFeatured: "desc" }],
+        include: {
+          category: true,
+          subcategory: true,
+          brand: true,
+          images: { orderBy: { displayOrder: "asc" } },
+          variants: {
+            where: { isDeleted: false },
+            include: { inventory: true },
+          },
+          schoolUniforms: {
+            include: { school: true },
+          },
+          reviews: {
+            where: { status: "APPROVED" },
+            select: { rating: true },
+          },
+        },
+      });
+
+      return [...products, ...backfill];
+    }
+
+    return products;
+  }
+
+  async findRecentlyViewed(productIds: string[]) {
+    if (!productIds || productIds.length === 0) return [];
+
+    const products = await this.db.product.findMany({
+      where: {
+        id: { in: productIds },
+        isActive: true,
+        isDeleted: false,
+      },
+      include: {
+        category: true,
+        subcategory: true,
+        brand: true,
+        images: { orderBy: { displayOrder: "asc" } },
+        variants: {
+          where: { isDeleted: false },
+          include: { inventory: true },
+        },
+        schoolUniforms: {
+          include: { school: true },
+        },
+        reviews: {
+          where: { status: "APPROVED" },
+          select: { rating: true },
+        },
+      },
+    });
+
+    // Preserve the order of requested IDs
+    const map = new Map(products.map((p) => [p.id, p]));
+    return productIds.map((id) => map.get(id)).filter(Boolean) as typeof products;
+  }
 }
 
 export const productRepository = new ProductRepository();
+

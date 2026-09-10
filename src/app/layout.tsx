@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Outfit } from "next/font/google";
 import { Toaster } from "sonner";
+import { Suspense } from "react";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
@@ -57,7 +58,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={outfit.variable}>
       <body className="min-h-screen bg-brand-cream text-brand-navy-950 antialiased flex flex-col justify-between selection:bg-brand-yellow-300 selection:text-brand-navy-950">
-        <Header />
+        <Suspense fallback={<div className="h-16 w-full bg-white border-b border-slate-200" />}>
+          <Header />
+        </Suspense>
         <main className="flex-1 w-full">{children}</main>
         <Footer />
         <MobileBottomNav />
