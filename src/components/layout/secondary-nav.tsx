@@ -11,35 +11,77 @@ export interface NavItem {
   isSpecial?: boolean;
 }
 
-const SECONDARY_NAV_ITEMS: NavItem[] = [
+const DEFAULT_NAV_ITEMS: NavItem[] = [
   { label: "ALL", href: "/categories" },
-  { label: "SUMMER DRESS", href: "/category/summer-dress" },
-  { label: "WINTER DRESS", href: "/category/winter-dress" },
-  { label: "SCHOOL UNIFORMS", href: "/category/school-uniforms" },
-  { label: "THERMALS", href: "/category/thermals" },
-  { label: "SCHOOL SHOES", href: "/category/school-shoes" },
-  { label: "BAGS", href: "/category/school-bags" },
-  { label: "STATIONERY", href: "/category/stationery" },
-  { label: "ACCESSORIES", href: "/category/belts-accessories" },
-  { label: "LUNCH BOXES", href: "/category/lunch-boxes-bottles" },
-  { label: "COMBOS", href: "/category/combos" },
-  { label: "OFFERS", href: "/category/offers", isSpecial: true },
+  { label: "SCHOOL UNIFORMS", href: "/shop/school-uniforms" },
+  { label: "SUMMER DRESS", href: "/shop/school-uniforms/summer-dress" },
+  { label: "WINTER DRESS", href: "/shop/school-uniforms/winter-dress" },
+  { label: "THERMALS", href: "/shop/thermals" },
+  { label: "SCHOOL SHOES", href: "/shop/school-shoes" },
+  { label: "BAGS", href: "/shop/school-bags" },
+  { label: "STATIONERY", href: "/shop/stationery" },
+  { label: "ACCESSORIES", href: "/shop/belts-accessories" },
+  { label: "LUNCH BOXES", href: "/shop/lunch-boxes-bottles" },
+  { label: "COMBOS", href: "/shop/combos" },
+  { label: "OFFERS", href: "/shop/school-uniforms?discount=20", isSpecial: true },
 ];
 
 interface SecondaryNavProps {
   activeCategory?: string;
   onSelectCategory?: (category: string) => void;
   className?: string;
+  items?: NavItem[];
 }
 
 export function SecondaryNav({
   activeCategory,
   onSelectCategory,
   className,
+  items,
 }: SecondaryNavProps) {
   const pathname = usePathname();
-  const isSummer = pathname.includes("summer");
-  const isWinter = pathname.includes("winter");
+  const [navItems, setNavItems] = React.useState<NavItem[]>(items || DEFAULT_NAV_ITEMS);
+
+  // Fetch dynamic categories from backend if items not provided directly
+  React.useEffect(() => {
+    if (items && items.length > 0) return;
+
+    fetch("/api/categories?format=navigation")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.data) && data.data.length > 0) {
+          const dynamicPills: NavItem[] = [{ label: "ALL", href: "/categories" }];
+
+          data.data.forEach((cat: any) => {
+            dynamicPills.push({
+              label: cat.label || cat.name.toUpperCase(),
+              href: `/shop/${cat.slug}`,
+            });
+
+            // Include primary children if any (e.g. Summer Dress, Winter Dress)
+            if (Array.isArray(cat.children)) {
+              cat.children.forEach((child: any) => {
+                dynamicPills.push({
+                  label: child.label || child.name.toUpperCase(),
+                  href: `/shop/${cat.slug}/${child.slug}`,
+                });
+              });
+            }
+          });
+
+          dynamicPills.push({
+            label: "OFFERS",
+            href: "/shop/school-uniforms?discount=20",
+            isSpecial: true,
+          });
+
+          setNavItems(dynamicPills);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load dynamic navigation:", err);
+      });
+  }, [items]);
 
   return (
     <div
@@ -53,18 +95,17 @@ export function SecondaryNav({
           className="flex items-center gap-1.5 sm:gap-2.5 overflow-x-auto no-scrollbar py-2.5 sm:py-3 text-[11px] sm:text-xs font-black tracking-wider text-slate-700 uppercase"
           aria-label="Secondary navigation"
         >
-          {SECONDARY_NAV_ITEMS.map((item) => {
+          {navItems.map((item) => {
+            const itemSlug = item.href.replace("/shop/", "").replace("/category/", "").replace("/", "");
             const isMatch =
-              (item.href === "/category/summer-dress" && isSummer) ||
-              (item.href === "/category/winter-dress" && isWinter) ||
-              (item.href === "/category/school-uniforms" && (pathname === "/category/school-uniforms" || pathname === "/school-uniforms") && !isSummer && !isWinter) ||
+              pathname === item.href ||
               (item.href === "/categories" && (pathname === "/categories" || pathname === "/category")) ||
-              (item.label === activeCategory) ||
-              (!isSummer && !isWinter && item.href !== "/categories" && (pathname === item.href || pathname.startsWith(item.href)));
+              (itemSlug && pathname.includes(itemSlug) && item.href !== "/categories") ||
+              (item.label === activeCategory);
 
             return (
               <Link
-                key={item.label}
+                key={item.href + item.label}
                 href={item.href}
                 onClick={() => {
                   if (onSelectCategory) {

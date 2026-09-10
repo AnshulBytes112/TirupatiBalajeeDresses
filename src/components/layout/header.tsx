@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Search,
   User,
@@ -16,6 +16,8 @@ import {
   RefreshCcw,
   PackageCheck,
   HelpCircle,
+  Shield,
+  X,
 } from "lucide-react";
 import { siteConfig } from "@/config/site";
 import { Drawer } from "@/components/ui/drawer";
@@ -23,8 +25,34 @@ import { cn } from "@/lib/utils";
 
 export function Header() {
   const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = React.useState("");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    const q = searchParams.get("q") || searchParams.get("search") || "";
+    setSearchQuery(q);
+  }, [searchParams]);
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = searchQuery.trim();
+    if (!trimmed) {
+      router.push("/shop");
+      return;
+    }
+    router.push(`/shop?q=${encodeURIComponent(trimmed)}`);
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery("");
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("q");
+    params.delete("search");
+    const queryStr = params.toString();
+    router.push(queryStr ? `${pathname}?${queryStr}` : pathname);
+  };
 
   return (
     <header className="sticky top-0 z-40 w-full bg-white shadow-nav">
@@ -49,6 +77,13 @@ export function Header() {
 
           {/* Right utility links */}
           <div className="hidden sm:flex items-center gap-5 text-slate-200 text-[11px] font-medium shrink-0">
+            <Link
+              href="/admin"
+              className="flex items-center gap-1.5 bg-brand-yellow-400 text-brand-navy-950 font-black px-2.5 py-0.5 rounded-full hover:bg-yellow-300 transition-colors shadow-2xs"
+            >
+              <Shield className="h-3 w-3" />
+              <span>Admin Portal</span>
+            </Link>
             <Link
               href="/track-order"
               className="flex items-center gap-1.5 hover:text-brand-yellow-400 transition-colors"
@@ -136,17 +171,36 @@ export function Header() {
             })}
           </nav>
 
-          {/* Search Input Bar */}
-          <div className="hidden md:flex flex-1 max-w-xs lg:max-w-md relative">
+          {/* Search Input Bar (Desktop) */}
+          <form
+            onSubmit={handleSearchSubmit}
+            className="hidden md:flex flex-1 max-w-xs lg:max-w-md relative items-center"
+          >
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search for uniforms, thermals, bags..."
-              className="w-full rounded-full border border-slate-200 bg-slate-50/90 px-4 py-1.5 sm:py-2 pl-9 text-xs sm:text-sm text-brand-navy-950 placeholder:text-slate-400 focus:border-brand-navy-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-brand-navy-900/20 transition-all"
+              className="w-full rounded-full border border-slate-200 bg-slate-50/90 px-4 py-1.5 sm:py-2 pl-9 pr-10 text-xs sm:text-sm text-brand-navy-950 placeholder:text-slate-400 focus:border-brand-navy-900 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-brand-navy-900/20 transition-all"
             />
-            <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
-          </div>
+            <button
+              type="submit"
+              aria-label="Submit search"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-brand-navy-950"
+            >
+              <Search className="h-3.5 w-3.5" />
+            </button>
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={handleClearSearch}
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition-colors"
+                aria-label="Clear search"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </form>
 
           {/* Action Icons: Account, Wishlist, Cart */}
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
@@ -187,18 +241,35 @@ export function Header() {
 
         {/* Mobile Search Row */}
         <div className="md:hidden px-4 pb-2.5">
-          <div className="relative">
+          <form onSubmit={handleSearchSubmit} className="relative flex items-center">
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search uniforms, thermals, bags..."
-              className="w-full rounded-full border border-slate-200 bg-slate-50 px-4 py-1.5 pl-9 text-xs text-brand-navy-950 placeholder:text-slate-400 focus:border-brand-navy-900 focus:bg-white focus:outline-none"
+              className="w-full rounded-full border border-slate-200 bg-slate-50 px-4 py-1.5 pl-9 pr-10 text-xs text-brand-navy-950 placeholder:text-slate-400 focus:border-brand-navy-900 focus:bg-white focus:outline-hidden"
             />
-            <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
-          </div>
+            <button
+              type="submit"
+              aria-label="Submit search"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-brand-navy-950"
+            >
+              <Search className="h-3.5 w-3.5" />
+            </button>
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={handleClearSearch}
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition-colors"
+                aria-label="Clear search"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </form>
         </div>
       </div>
+
 
       {/* Mobile Drawer */}
       <Drawer

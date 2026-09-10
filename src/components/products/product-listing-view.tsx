@@ -243,82 +243,153 @@ export function ProductListingView({
   };
 
   const handleClearAll = () => {
-    updateURL({}, currentSort, 1);
+    const params = new URLSearchParams();
+    const q = searchParams.get("q") || searchParams.get("search");
+    if (q) params.set("q", q);
+    const newUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+    router.push(newUrl, { scroll: false });
   };
 
   const handleRemoveSingleFilter = (key: string, value: string) => {
-    const updated = { ...currentFilters };
-    if (key === "size") {
-      const sizes = updated.size ? updated.size.split(",") : [];
-      const filteredSizes = sizes.filter((s) => s !== value);
-      updated.size = filteredSizes.length > 0 ? filteredSizes.join(",") : undefined;
+    const params = new URLSearchParams(searchParams.toString());
+    const currentParamVal = params.get(key);
+
+    if (key === "minPrice" || key === "maxPrice") {
+      params.delete("minPrice");
+      params.delete("maxPrice");
+    } else if (key === "inStock" || key === "outOfStock" || key === "discount" || key === "rating") {
+      params.delete(key);
+    } else if (currentParamVal) {
+      const items = currentParamVal.split(",").map((s) => s.trim()).filter(Boolean);
+      const filtered = items.filter(
+        (s) => s.toLowerCase() !== value.toLowerCase()
+      );
+      if (filtered.length > 0) {
+        params.set(key, filtered.join(","));
+      } else {
+        params.delete(key);
+      }
     } else {
-      (updated as any)[key] = undefined;
+      params.delete(key);
     }
-    updateURL(updated, currentSort, 1);
+
+    params.delete("page");
+    const queryStr = params.toString();
+    const newUrl = queryStr ? `${pathname}?${queryStr}` : pathname;
+    router.push(newUrl, { scroll: false });
   };
 
   // Build active filters list for pill tags
   const activeFilterList: ActiveFilter[] = React.useMemo(() => {
     const list: ActiveFilter[] = [];
-    if (currentFilters.school) {
-      const sName =
-        filterOptions.schools.find((s) => s.slug === currentFilters.school)?.name ||
-        currentFilters.school;
-      list.push({ key: "school", label: "School", value: sName });
-    }
-    if (currentFilters.season) {
-      list.push({
-        key: "season",
-        label: "Season",
-        value: currentFilters.season.charAt(0).toUpperCase() + currentFilters.season.slice(1).toLowerCase(),
+
+    // School multi-select
+    if (currentFilters.school && currentFilters.school !== preFilters.school) {
+      currentFilters.school.split(",").forEach((slug) => {
+        const cleanSlug = slug.trim();
+        const sName =
+          filterOptions.schools.find((s) => s.slug === cleanSlug)?.name || cleanSlug;
+        list.push({ key: "school", label: "School", value: sName, rawSlug: cleanSlug });
       });
     }
-    if (currentFilters.gender) {
-      list.push({ key: "gender", label: "Gender", value: currentFilters.gender });
+
+    // Brand multi-select
+    if (currentFilters.brand && currentFilters.brand !== preFilters.brand) {
+      currentFilters.brand.split(",").forEach((slug) => {
+        const cleanSlug = slug.trim();
+        const bName =
+          filterOptions.brands.find((b) => b.slug === cleanSlug)?.name || cleanSlug;
+        list.push({ key: "brand", label: "Brand", value: bName, rawSlug: cleanSlug });
+      });
     }
-    if (currentFilters.classGrade) {
-      list.push({ key: "classGrade", label: "Grade", value: currentFilters.classGrade });
+
+    // Season multi-select
+    if (currentFilters.season && currentFilters.season !== preFilters.season) {
+      currentFilters.season.split(",").forEach((s) => {
+        const clean = s.trim();
+        list.push({
+          key: "season",
+          label: "Season",
+          value: clean.charAt(0).toUpperCase() + clean.slice(1).toLowerCase(),
+          rawSlug: clean,
+        });
+      });
     }
-    if (currentFilters.category && currentFilters.category !== "school-uniforms") {
-      const cName =
-        filterOptions.categories.find((c) => c.slug === currentFilters.category)?.name ||
-        currentFilters.category;
-      list.push({ key: "category", label: "Category", value: cName });
+
+    // Gender multi-select
+    if (currentFilters.gender && currentFilters.gender !== preFilters.gender) {
+      currentFilters.gender.split(",").forEach((g) => {
+        const clean = g.trim();
+        list.push({ key: "gender", label: "Gender", value: clean, rawSlug: clean });
+      });
     }
-    if (currentFilters.size) {
+
+    // Class multi-select
+    if (currentFilters.classGrade && currentFilters.classGrade !== preFilters.classGrade) {
+      currentFilters.classGrade.split(",").forEach((c) => {
+        const clean = c.trim();
+        list.push({ key: "classGrade", label: "Grade", value: clean, rawSlug: clean });
+      });
+    }
+
+    // Category multi-select
+    if (currentFilters.category && currentFilters.category !== "school-uniforms" && currentFilters.category !== preFilters.category) {
+      currentFilters.category.split(",").forEach((catSlug) => {
+        const cleanSlug = catSlug.trim();
+        const cName =
+          filterOptions.categories.find((c) => c.slug === cleanSlug)?.name || cleanSlug;
+        list.push({ key: "category", label: "Category", value: cName, rawSlug: cleanSlug });
+      });
+    }
+
+    // Size multi-select
+    if (currentFilters.size && currentFilters.size !== preFilters.size) {
       currentFilters.size.split(",").forEach((sz) => {
-        list.push({ key: "size", label: "Size", value: sz.trim() });
+        const clean = sz.trim();
+        list.push({ key: "size", label: "Size", value: clean, rawSlug: clean });
       });
     }
-    if (currentFilters.color) {
-      list.push({ key: "color", label: "Color", value: currentFilters.color });
+
+    // Color multi-select
+    if (currentFilters.color && currentFilters.color !== preFilters.color) {
+      currentFilters.color.split(",").forEach((col) => {
+        const clean = col.trim();
+        list.push({ key: "color", label: "Color", value: clean, rawSlug: clean });
+      });
     }
-    if (currentFilters.brand) {
-      const bName =
-        filterOptions.brands.find((b) => b.slug === currentFilters.brand)?.name ||
-        currentFilters.brand;
-      list.push({ key: "brand", label: "Brand", value: bName });
-    }
+
+    // Price
     if (currentFilters.minPrice || currentFilters.maxPrice) {
       const min = currentFilters.minPrice ? `₹${currentFilters.minPrice}` : "₹0";
       const max = currentFilters.maxPrice ? `₹${currentFilters.maxPrice}` : "above";
-      list.push({ key: "minPrice", label: "Price", value: `${min} - ${max}` });
+      list.push({ key: "minPrice", label: "Price", value: `${min} - ${max}`, rawSlug: "price" });
     }
+
+    // Discount
     if (currentFilters.discount) {
-      list.push({ key: "discount", label: "Discount", value: `${currentFilters.discount}%+` });
+      list.push({ key: "discount", label: "Discount", value: `${currentFilters.discount}%+`, rawSlug: String(currentFilters.discount) });
     }
+
+    // Rating
     if (currentFilters.rating) {
-      list.push({ key: "rating", label: "Rating", value: `${currentFilters.rating}★+` });
+      list.push({ key: "rating", label: "Rating", value: `${currentFilters.rating}★+`, rawSlug: String(currentFilters.rating) });
     }
+
+    // In Stock
     if (currentFilters.inStock) {
-      list.push({ key: "inStock", label: "Availability", value: "In Stock" });
+      list.push({ key: "inStock", label: "Availability", value: "In Stock", rawSlug: "inStock" });
     }
+
+    // Out of Stock
+    if (currentFilters.outOfStock) {
+      list.push({ key: "outOfStock", label: "Availability", value: "Out of Stock", rawSlug: "outOfStock" });
+    }
+
     return list;
   }, [currentFilters, preFilters, filterOptions]);
 
   return (
-    <div className="min-h-screen bg-brand-cream-50/30 pb-20 pt-2 sm:pt-4">
+    <div className="min-h-screen bg-brand-cream-50/30 pb-28 sm:pb-20 pt-2 sm:pt-4">
       <Container>
         {/* PLP Breadcrumbs, Category Pill Subnav & Top Products Count */}
         <PLPHeader
@@ -337,6 +408,17 @@ export function ProductListingView({
           season={season || preFilters.season}
           title={title}
           subtitle={description}
+        />
+
+        {/* Mobile Filter & Sort Sticky Top Bar + Drawer */}
+        <MobileFilterDrawer
+          filters={currentFilters}
+          options={filterOptions}
+          totalProducts={pagination.total}
+          currentSort={currentSort}
+          onFilterChange={handleFilterChange}
+          onSortChange={handleSortChange}
+          onClearAll={handleClearAll}
         />
 
         {/* Active Filter Pills */}
@@ -425,18 +507,8 @@ export function ProductListingView({
 
         {/* Bottom Trust Badges Bar */}
         <TrustBadgesBar />
-
-        {/* Mobile Filter & Sort Drawer / Bottom Sheet */}
-        <MobileFilterDrawer
-          filters={currentFilters}
-          options={filterOptions}
-          totalProducts={pagination.total}
-          currentSort={currentSort}
-          onFilterChange={handleFilterChange}
-          onSortChange={handleSortChange}
-          onClearAll={handleClearAll}
-        />
       </Container>
     </div>
   );
 }
+

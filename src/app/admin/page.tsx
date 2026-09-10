@@ -178,6 +178,14 @@ export default function SuperAdminDeepAnalyticsDashboard() {
           <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
             {/* Quick Navigation Between Admin Modules */}
             <Link
+              href="/admin/categories"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-brand-navy-900 bg-brand-navy-950 px-3.5 py-2 text-xs font-black text-white hover:bg-brand-navy-800 transition-colors shadow-2xs"
+            >
+              <Layers className="h-3.5 w-3.5 text-brand-yellow-400" />
+              <span>Category Manager</span>
+            </Link>
+
+            <Link
               href="/admin/homepage"
               className="inline-flex items-center gap-1.5 rounded-xl border border-[#E5DCD3] bg-white px-3 py-2 text-xs font-bold text-stone-700 hover:bg-[#F5EFEB] transition-colors shadow-2xs"
             >
@@ -190,7 +198,7 @@ export default function SuperAdminDeepAnalyticsDashboard() {
               className="inline-flex items-center gap-1.5 rounded-xl border border-[#E5DCD3] bg-white px-3 py-2 text-xs font-bold text-stone-700 hover:bg-[#F5EFEB] transition-colors shadow-2xs"
             >
               <Users className="h-3.5 w-3.5" />
-              <span>Users & RBAC</span>
+              <span>Users &amp; RBAC</span>
             </Link>
 
             <Link
@@ -204,7 +212,7 @@ export default function SuperAdminDeepAnalyticsDashboard() {
             <Link
               href="/"
               target="_blank"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-[#E5DCD3] bg-white px-3 py-2 text-xs font-bold text-stone-700 hover:bg-[#F5EFEB] transition-colors shadow-2xs"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-[#D6C7B2] bg-white px-3 py-2 text-xs font-bold text-stone-700 hover:bg-[#F5EFEB] transition-colors shadow-2xs"
             >
               <ExternalLink className="h-3.5 w-3.5" />
               <span>Live Site</span>

@@ -9,6 +9,7 @@ export interface FilterState {
   gender?: string;
   classGrade?: string;
   category?: string;
+  subcategory?: string;
   size?: string;
   color?: string;
   brand?: string;
@@ -70,7 +71,9 @@ export function FilterSidebar({
   const [collapsed, setCollapsed] = React.useState<Record<string, boolean>>({
     category: false,
     school: false,
+    brand: false,
     gender: false,
+    season: false,
     classGrade: false,
     size: false,
     color: false,
@@ -87,27 +90,29 @@ export function FilterSidebar({
     setCollapsed((prev) => ({ ...prev, [section]: !prev[section] }));
   };
 
-  const handleCheckboxChange = (key: keyof FilterState, value: string) => {
-    const currentValue = filters[key] as string | undefined;
-    if (currentValue === value) {
-      onFilterChange({ ...filters, [key]: undefined });
+  // Helper for multi-select toggling (comma-separated values)
+  const handleMultiToggle = (key: keyof FilterState, value: string) => {
+    const currentStr = (filters[key] as string) || "";
+    const currentList = currentStr
+      ? currentStr.split(",").map((s) => s.trim()).filter(Boolean)
+      : [];
+    let nextList: string[];
+    if (currentList.some((v) => v.toLowerCase() === value.toLowerCase())) {
+      nextList = currentList.filter((v) => v.toLowerCase() !== value.toLowerCase());
     } else {
-      onFilterChange({ ...filters, [key]: value });
-    }
-  };
-
-  const handleSizeToggle = (sizeVal: string) => {
-    const currentSizes = filters.size ? filters.size.split(",") : [];
-    let newSizes: string[];
-    if (currentSizes.includes(sizeVal)) {
-      newSizes = currentSizes.filter((s) => s !== sizeVal);
-    } else {
-      newSizes = [...currentSizes, sizeVal];
+      nextList = [...currentList, value];
     }
     onFilterChange({
       ...filters,
-      size: newSizes.length > 0 ? newSizes.join(",") : undefined,
+      [key]: nextList.length > 0 ? nextList.join(",") : undefined,
     });
+  };
+
+  const isMultiChecked = (key: keyof FilterState, value: string) => {
+    const currentStr = (filters[key] as string) || "";
+    if (!currentStr) return false;
+    const currentList = currentStr.split(",").map((s) => s.trim().toLowerCase());
+    return currentList.includes(value.toLowerCase());
   };
 
   const hasActiveFilters = Object.values(filters).some(
@@ -164,14 +169,7 @@ export function FilterSidebar({
         {!collapsed.category && (
           <div className="mt-2.5 space-y-1.5 max-h-60 overflow-y-auto pr-1">
             {options.categories.map((cat) => {
-              const isChecked =
-                filters.category === cat.slug ||
-                (cat.slug === "summer-dress" &&
-                  (filters.season?.toLowerCase() === "summer" || filters.category === "summer-dress")) ||
-                (cat.slug === "winter-dress" &&
-                  (filters.season?.toLowerCase() === "winter" || filters.category === "winter-dress")) ||
-                (cat.slug === "school-uniforms" &&
-                  (filters.category === "school-uniforms" && !filters.season));
+              const isChecked = isMultiChecked("category", cat.slug);
 
               return (
                 <label
@@ -182,23 +180,7 @@ export function FilterSidebar({
                     <input
                       type="checkbox"
                       checked={isChecked}
-                      onChange={() => {
-                        if (cat.slug === "summer-dress") {
-                          onFilterChange({
-                            ...filters,
-                            category: isChecked ? undefined : "school-uniforms",
-                            season: isChecked ? undefined : "SUMMER",
-                          });
-                        } else if (cat.slug === "winter-dress") {
-                          onFilterChange({
-                            ...filters,
-                            category: isChecked ? undefined : "school-uniforms",
-                            season: isChecked ? undefined : "WINTER",
-                          });
-                        } else {
-                          handleCheckboxChange("category", cat.slug);
-                        }
-                      }}
+                      onChange={() => handleMultiToggle("category", cat.slug)}
                       className="h-3.5 w-3.5 rounded-sm border-slate-300 text-brand-navy-900 focus:ring-brand-navy-500 cursor-pointer accent-brand-navy-900"
                     />
                     <span className={isChecked ? "font-bold text-brand-navy-950" : "font-medium"}>
@@ -247,7 +229,7 @@ export function FilterSidebar({
 
             <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1">
               {displayedSchools.map((school) => {
-                const isChecked = filters.school === school.slug;
+                const isChecked = isMultiChecked("school", school.slug);
                 return (
                   <label
                     key={school.id}
@@ -257,7 +239,7 @@ export function FilterSidebar({
                       <input
                         type="checkbox"
                         checked={isChecked}
-                        onChange={() => handleCheckboxChange("school", school.slug)}
+                        onChange={() => handleMultiToggle("school", school.slug)}
                         className="h-3.5 w-3.5 rounded-sm border-slate-300 text-brand-navy-900 focus:ring-brand-navy-500 cursor-pointer accent-brand-navy-900"
                       />
                       <span className={isChecked ? "font-bold text-brand-navy-950" : "font-medium"}>
@@ -287,7 +269,105 @@ export function FilterSidebar({
         )}
       </div>
 
-      {/* 3. Gender Accordion */}
+      {/* 3. Brand Accordion */}
+      {options.brands && options.brands.length > 0 && (
+        <div className="border-b border-slate-200 pb-4">
+          <button
+            type="button"
+            onClick={() => toggleSection("brand")}
+            className="flex w-full items-center justify-between py-1 text-xs font-black text-brand-navy-950 uppercase tracking-wider hover:text-brand-navy-700"
+          >
+            <span>Brand</span>
+            {collapsed.brand ? (
+              <ChevronDown className="h-4 w-4 text-slate-400" />
+            ) : (
+              <ChevronUp className="h-4 w-4 text-slate-400" />
+            )}
+          </button>
+
+          {!collapsed.brand && (
+            <div className="mt-2.5 space-y-1.5 max-h-44 overflow-y-auto pr-1">
+              {options.brands.map((brand) => {
+                const isChecked = isMultiChecked("brand", brand.slug);
+                return (
+                  <label
+                    key={brand.id}
+                    className="flex items-center justify-between text-xs text-slate-700 hover:text-brand-navy-950 cursor-pointer py-0.5 group"
+                  >
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => handleMultiToggle("brand", brand.slug)}
+                        className="h-3.5 w-3.5 rounded-sm border-slate-300 text-brand-navy-900 focus:ring-brand-navy-500 cursor-pointer accent-brand-navy-900"
+                      />
+                      <span className={isChecked ? "font-bold text-brand-navy-950" : "font-medium"}>
+                        {brand.name}
+                      </span>
+                    </div>
+                    {brand.count !== undefined && brand.count > 0 && (
+                      <span className="text-[11px] font-semibold text-slate-400 group-hover:text-slate-600">
+                        ({brand.count})
+                      </span>
+                    )}
+                  </label>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 4. Season Accordion */}
+      {options.seasons && options.seasons.length > 0 && (
+        <div className="border-b border-slate-200 pb-4">
+          <button
+            type="button"
+            onClick={() => toggleSection("season")}
+            className="flex w-full items-center justify-between py-1 text-xs font-black text-brand-navy-950 uppercase tracking-wider hover:text-brand-navy-700"
+          >
+            <span>Season</span>
+            {collapsed.season ? (
+              <ChevronDown className="h-4 w-4 text-slate-400" />
+            ) : (
+              <ChevronUp className="h-4 w-4 text-slate-400" />
+            )}
+          </button>
+
+          {!collapsed.season && (
+            <div className="mt-2.5 space-y-1.5">
+              {options.seasons.map((s) => {
+                const isChecked = isMultiChecked("season", s.value);
+                return (
+                  <label
+                    key={s.value}
+                    className="flex items-center justify-between text-xs text-slate-700 hover:text-brand-navy-950 cursor-pointer py-0.5 group"
+                  >
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => handleMultiToggle("season", s.value)}
+                        className="h-3.5 w-3.5 rounded-sm border-slate-300 text-brand-navy-900 focus:ring-brand-navy-500 cursor-pointer accent-brand-navy-900"
+                      />
+                      <span className={isChecked ? "font-bold text-brand-navy-950" : "font-medium"}>
+                        {s.label}
+                      </span>
+                    </div>
+                    {s.count !== undefined && s.count > 0 && (
+                      <span className="text-[11px] font-semibold text-slate-400 group-hover:text-slate-600">
+                        ({s.count})
+                      </span>
+                    )}
+                  </label>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 5. Gender Accordion */}
       <div className="border-b border-slate-200 pb-4">
         <button
           type="button"
@@ -305,7 +385,7 @@ export function FilterSidebar({
         {!collapsed.gender && (
           <div className="mt-2.5 space-y-1.5">
             {options.genders.map((g) => {
-              const isChecked = filters.gender === g.value;
+              const isChecked = isMultiChecked("gender", g.value);
               return (
                 <label
                   key={g.value}
@@ -315,7 +395,7 @@ export function FilterSidebar({
                     <input
                       type="checkbox"
                       checked={isChecked}
-                      onChange={() => handleCheckboxChange("gender", g.value)}
+                      onChange={() => handleMultiToggle("gender", g.value)}
                       className="h-3.5 w-3.5 rounded-sm border-slate-300 text-brand-navy-900 focus:ring-brand-navy-500 cursor-pointer accent-brand-navy-900"
                     />
                     <span className={isChecked ? "font-bold text-brand-navy-950" : "font-medium"}>
@@ -334,7 +414,7 @@ export function FilterSidebar({
         )}
       </div>
 
-      {/* 4. Class / Grade Accordion */}
+      {/* 6. Class / Grade Accordion */}
       <div className="border-b border-slate-200 pb-4">
         <button
           type="button"
@@ -350,9 +430,9 @@ export function FilterSidebar({
         </button>
 
         {!collapsed.classGrade && (
-          <div className="mt-2.5 space-y-1.5">
+          <div className="mt-2.5 space-y-1.5 max-h-48 overflow-y-auto pr-1">
             {options.classes.map((c) => {
-              const isChecked = filters.classGrade === c.value;
+              const isChecked = isMultiChecked("classGrade", c.value);
               return (
                 <label
                   key={c.value}
@@ -362,7 +442,7 @@ export function FilterSidebar({
                     <input
                       type="checkbox"
                       checked={isChecked}
-                      onChange={() => handleCheckboxChange("classGrade", c.value)}
+                      onChange={() => handleMultiToggle("classGrade", c.value)}
                       className="h-3.5 w-3.5 rounded-sm border-slate-300 text-brand-navy-900 focus:ring-brand-navy-500 cursor-pointer accent-brand-navy-900"
                     />
                     <span className={isChecked ? "font-bold text-brand-navy-950" : "font-medium"}>
@@ -381,7 +461,7 @@ export function FilterSidebar({
         )}
       </div>
 
-      {/* 5. Size Accordion */}
+      {/* 7. Size Accordion */}
       <div className="border-b border-slate-200 pb-4">
         <button
           type="button"
@@ -397,10 +477,9 @@ export function FilterSidebar({
         </button>
 
         {!collapsed.size && (
-          <div className="mt-2.5 space-y-1.5">
+          <div className="mt-2.5 space-y-1.5 max-h-48 overflow-y-auto pr-1">
             {options.sizes.map((s) => {
-              const activeSizes = filters.size ? filters.size.split(",") : [];
-              const isChecked = activeSizes.includes(s.value);
+              const isChecked = isMultiChecked("size", s.value);
               return (
                 <label
                   key={s.value}
@@ -410,7 +489,7 @@ export function FilterSidebar({
                     <input
                       type="checkbox"
                       checked={isChecked}
-                      onChange={() => handleSizeToggle(s.value)}
+                      onChange={() => handleMultiToggle("size", s.value)}
                       className="h-3.5 w-3.5 rounded-sm border-slate-300 text-brand-navy-900 focus:ring-brand-navy-500 cursor-pointer accent-brand-navy-900"
                     />
                     <span className={isChecked ? "font-bold text-brand-navy-950" : "font-medium"}>
@@ -429,7 +508,7 @@ export function FilterSidebar({
         )}
       </div>
 
-      {/* 6. Color Accordion (Swatches) */}
+      {/* 8. Color Accordion (Swatches) */}
       <div className="border-b border-slate-200 pb-4">
         <button
           type="button"
@@ -447,17 +526,12 @@ export function FilterSidebar({
         {!collapsed.color && (
           <div className="mt-3 flex flex-wrap gap-2.5">
             {options.colors.map((c) => {
-              const isSelected = filters.color === c.name;
+              const isSelected = isMultiChecked("color", c.name);
               return (
                 <button
                   key={c.name}
                   type="button"
-                  onClick={() =>
-                    onFilterChange({
-                      ...filters,
-                      color: isSelected ? undefined : c.name,
-                    })
-                  }
+                  onClick={() => handleMultiToggle("color", c.name)}
                   title={c.name}
                   aria-label={`Filter by ${c.name}`}
                   className={`relative flex h-6 w-6 items-center justify-center rounded-full border shadow-2xs transition-all ${
@@ -484,7 +558,7 @@ export function FilterSidebar({
         )}
       </div>
 
-      {/* 7. Price Accordion */}
+      {/* 9. Price Accordion */}
       <div className="border-b border-slate-200 pb-4">
         <button
           type="button"
@@ -550,7 +624,7 @@ export function FilterSidebar({
         )}
       </div>
 
-      {/* 8. Availability Accordion */}
+      {/* 10. Availability Accordion */}
       <div className="border-b border-slate-200 pb-4">
         <button
           type="button"
@@ -618,7 +692,7 @@ export function FilterSidebar({
         )}
       </div>
 
-      {/* 9. Discount Accordion */}
+      {/* 11. Discount Accordion */}
       <div className="border-b border-slate-200 pb-4">
         <button
           type="button"
@@ -670,7 +744,7 @@ export function FilterSidebar({
         )}
       </div>
 
-      {/* 10. Rating Accordion */}
+      {/* 12. Rating Accordion */}
       <div className="pb-4">
         <button
           type="button"
@@ -724,3 +798,4 @@ export function FilterSidebar({
     </aside>
   );
 }
+

@@ -30,20 +30,27 @@ export const SORT_OPTIONS = [
   { value: "newest", label: "Newest" },
 ];
 
-export const CATEGORY_PILLS = [
+export interface CategoryPillItem {
+  label: string;
+  href: string;
+  isSpecial?: boolean;
+}
+
+export const CATEGORY_PILLS: CategoryPillItem[] = [
   { label: "ALL", href: "/categories" },
-  { label: "SUMMER DRESS", href: "/category/summer-dress" },
-  { label: "WINTER DRESS", href: "/category/winter-dress" },
-  { label: "SCHOOL UNIFORMS", href: "/category/school-uniforms" },
-  { label: "THERMALS", href: "/category/thermals" },
-  { label: "SCHOOL SHOES", href: "/category/school-shoes" },
-  { label: "BAGS", href: "/category/school-bags" },
-  { label: "STATIONERY", href: "/category/stationery" },
-  { label: "ACCESSORIES", href: "/category/belts-accessories" },
-  { label: "LUNCH BOXES", href: "/category/lunch-boxes-bottles" },
-  { label: "COMBOS", href: "/category/combos" },
-  { label: "OFFERS", href: "/category/offers", isSpecial: true },
+  { label: "SCHOOL UNIFORMS", href: "/shop/school-uniforms" },
+  { label: "SUMMER DRESS", href: "/shop/school-uniforms/summer-dress" },
+  { label: "WINTER DRESS", href: "/shop/school-uniforms/winter-dress" },
+  { label: "THERMALS", href: "/shop/thermals" },
+  { label: "SCHOOL SHOES", href: "/shop/school-shoes" },
+  { label: "BAGS", href: "/shop/school-bags" },
+  { label: "STATIONERY", href: "/shop/stationery" },
+  { label: "ACCESSORIES", href: "/shop/belts-accessories" },
+  { label: "LUNCH BOXES", href: "/shop/lunch-boxes-bottles" },
+  { label: "COMBOS", href: "/shop/combos" },
+  { label: "OFFERS", href: "/shop/school-uniforms?discount=20", isSpecial: true },
 ];
+
 
 export function PLPHeader({
   title,
@@ -55,8 +62,42 @@ export function PLPHeader({
   isLoading = false,
 }: PLPHeaderProps) {
   const pathname = usePathname();
-  const isSummer = pathname.includes("summer");
-  const isWinter = pathname.includes("winter");
+  const [pills, setPills] = React.useState(CATEGORY_PILLS);
+
+  React.useEffect(() => {
+    fetch("/api/categories?format=navigation")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.data) && data.data.length > 0) {
+          const dynamicPills: CategoryPillItem[] = [{ label: "ALL", href: "/categories" }];
+
+          data.data.forEach((cat: any) => {
+            dynamicPills.push({
+              label: cat.label || cat.name.toUpperCase(),
+              href: `/shop/${cat.slug}`,
+            });
+
+            if (Array.isArray(cat.children)) {
+              cat.children.forEach((child: any) => {
+                dynamicPills.push({
+                  label: child.label || child.name.toUpperCase(),
+                  href: `/shop/${cat.slug}/${child.slug}`,
+                });
+              });
+            }
+          });
+
+          dynamicPills.push({
+            label: "OFFERS",
+            href: "/shop/school-uniforms?discount=20",
+            isSpecial: true,
+          });
+
+          setPills(dynamicPills);
+        }
+      })
+      .catch((err) => console.error("PLPHeader nav load error:", err));
+  }, []);
 
   return (
     <div className="mb-4 sm:mb-6">
@@ -66,20 +107,12 @@ export function PLPHeader({
           className="flex items-center gap-1.5 sm:gap-2.5 overflow-x-auto no-scrollbar py-2.5 sm:py-3 text-[11px] sm:text-xs font-black tracking-wider uppercase"
           aria-label="Category sub-navigation"
         >
-          {CATEGORY_PILLS.map((pill) => {
+          {pills.map((pill) => {
+            const pillSlug = pill.href.replace("/shop/", "").replace("/category/", "").replace("/", "");
             const isMatch =
-              (pill.href === "/category/summer-dress" && isSummer) ||
-              (pill.href === "/category/winter-dress" && isWinter) ||
-              (pill.href === "/category/school-uniforms" &&
-                (pathname === "/category/school-uniforms" || pathname === "/school-uniforms") &&
-                !isSummer &&
-                !isWinter) ||
-              (pill.href === "/categories" &&
-                (pathname === "/categories" || pathname === "/category" || pathname === "/")) ||
-              (!isSummer &&
-                !isWinter &&
-                pill.href !== "/categories" &&
-                (pathname === pill.href || pathname.startsWith(pill.href)));
+              pathname === pill.href ||
+              (pill.href === "/categories" && (pathname === "/categories" || pathname === "/category")) ||
+              (pillSlug && pathname.includes(pillSlug) && pill.href !== "/categories");
 
             return (
               <Link

@@ -231,10 +231,23 @@ model Category {
   children     Category[] @relation("CategoryHierarchy")
   products     Product[]  @relation("ProductCategory")
   subProducts  Product[]  @relation("ProductSubcategory")
+  redirects    CategoryRedirect[]
 
   @@index([slug])
   @@index([parentId])
   @@map("categories")
+}
+
+model CategoryRedirect {
+  id         String   @id @default(uuid())
+  oldSlug    String   @unique
+  newSlug    String
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@index([oldSlug])
+  @@map("category_redirects")
 }
 
 model Product {

@@ -32,68 +32,86 @@ export class ProductRepository extends BaseRepository {
     const searchTerm = search || q;
     const skip = (page - 1) * limit;
 
-    // Handle comma-separated sizes or single size
-    const sizeList = size ? size.split(",").map((s) => s.trim()) : undefined;
+    // Multi-select list parsers
+    const sizeList = size ? size.split(",").map((s) => s.trim()).filter(Boolean) : undefined;
+    const categoryList = category ? category.split(",").map((c) => c.trim()).filter(Boolean) : undefined;
+    const subcategoryList = subcategory ? subcategory.split(",").map((s) => s.trim()).filter(Boolean) : undefined;
+    const schoolList = school ? school.split(",").map((s) => s.trim()).filter(Boolean) : undefined;
+    const brandList = brand ? brand.split(",").map((b) => b.trim()).filter(Boolean) : undefined;
+    const classList = classGrade ? classGrade.split(",").map((c) => c.trim()).filter(Boolean) : undefined;
+    const colorList = color ? color.split(",").map((c) => c.trim()).filter(Boolean) : undefined;
+    
+    const genderList = gender
+      ? (gender.split(",").map((g) => g.trim().toUpperCase()).filter((g) => ["BOYS", "GIRLS", "UNISEX"].includes(g)) as ("BOYS" | "GIRLS" | "UNISEX")[])
+      : undefined;
+
+    const seasonList = season
+      ? (season.split(",").map((s) => s.trim().toUpperCase()).filter((s) => ["SUMMER", "WINTER", "ALL_SEASON"].includes(s)) as ("SUMMER" | "WINTER" | "ALL_SEASON")[])
+      : undefined;
 
     const where: Prisma.ProductWhereInput = {
       isActive: true,
       isDeleted: false,
-      ...(category
+      ...(categoryList && categoryList.length > 0
         ? {
             OR: [
-              { category: { slug: category } },
-              { subcategory: { slug: category } },
+              { category: { slug: { in: categoryList } } },
+              { subcategory: { slug: { in: categoryList } } },
             ],
           }
         : {}),
-      ...(subcategory ? { subcategory: { slug: subcategory } } : {}),
-      ...(brand
+      ...(subcategoryList && subcategoryList.length > 0
+        ? { subcategory: { slug: { in: subcategoryList } } }
+        : {}),
+      ...(brandList && brandList.length > 0
         ? {
             brand: {
               OR: [
-                { slug: brand },
-                { name: { contains: brand, mode: "insensitive" } },
+                { slug: { in: brandList } },
+                ...brandList.map((b) => ({ name: { contains: b, mode: "insensitive" as const } })),
               ],
             },
           }
         : {}),
-      ...(school
+      ...(schoolList && schoolList.length > 0
         ? {
             schoolUniforms: {
               some: {
                 school: {
                   OR: [
-                    { slug: school },
-                    { name: { contains: school, mode: "insensitive" } },
+                    { slug: { in: schoolList } },
+                    ...schoolList.map((s) => ({ name: { contains: s, mode: "insensitive" as const } })),
                   ],
                 },
               },
             },
           }
         : {}),
-      ...(gender
+      ...(genderList && genderList.length > 0
         ? {
             schoolUniforms: {
               some: {
-                gender: { in: [gender, "UNISEX"] },
+                gender: { in: [...genderList, "UNISEX"] },
               },
             },
           }
         : {}),
-      ...(season
+      ...(seasonList && seasonList.length > 0
         ? {
             schoolUniforms: {
               some: {
-                season: { in: [season, "ALL_SEASON"] },
+                season: { in: [...seasonList, "ALL_SEASON"] },
               },
             },
           }
         : {}),
-      ...(classGrade
+      ...(classList && classList.length > 0
         ? {
             schoolUniforms: {
               some: {
-                classGrade: { contains: classGrade, mode: "insensitive" },
+                OR: classList.map((c) => ({
+                  classGrade: { contains: c, mode: "insensitive" as const },
+                })),
               },
             },
           }
@@ -108,11 +126,13 @@ export class ProductRepository extends BaseRepository {
             },
           }
         : {}),
-      ...(color
+      ...(colorList && colorList.length > 0
         ? {
             variants: {
               some: {
-                color: { contains: color, mode: "insensitive" },
+                OR: colorList.map((c) => ({
+                  color: { contains: c, mode: "insensitive" as const },
+                })),
                 isDeleted: false,
               },
             },

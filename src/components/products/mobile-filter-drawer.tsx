@@ -58,64 +58,60 @@ export function MobileFilterDrawer({
     setFilterOpen(false);
   };
 
-  const handleCheckboxChange = (key: keyof FilterState, value: string) => {
-    const currentValue = draftFilters[key] as string | undefined;
-    if (currentValue === value) {
-      setDraftFilters((prev) => ({ ...prev, [key]: undefined }));
+  const handleMultiToggle = (key: keyof FilterState, value: string) => {
+    const currentStr = (draftFilters[key] as string) || "";
+    const currentList = currentStr
+      ? currentStr.split(",").map((s) => s.trim()).filter(Boolean)
+      : [];
+    let nextList: string[];
+    if (currentList.some((v) => v.toLowerCase() === value.toLowerCase())) {
+      nextList = currentList.filter((v) => v.toLowerCase() !== value.toLowerCase());
     } else {
-      setDraftFilters((prev) => ({ ...prev, [key]: value }));
-    }
-  };
-
-  const handleSizeToggle = (sizeVal: string) => {
-    const currentSizes = draftFilters.size ? draftFilters.size.split(",") : [];
-    let newSizes: string[];
-    if (currentSizes.includes(sizeVal)) {
-      newSizes = currentSizes.filter((s) => s !== sizeVal);
-    } else {
-      newSizes = [...currentSizes, sizeVal];
+      nextList = [...currentList, value];
     }
     setDraftFilters((prev) => ({
       ...prev,
-      size: newSizes.length > 0 ? newSizes.join(",") : undefined,
+      [key]: nextList.length > 0 ? nextList.join(",") : undefined,
     }));
+  };
+
+  const isMultiChecked = (key: keyof FilterState, value: string) => {
+    const currentStr = (draftFilters[key] as string) || "";
+    if (!currentStr) return false;
+    const currentList = currentStr.split(",").map((s) => s.trim().toLowerCase());
+    return currentList.includes(value.toLowerCase());
   };
 
   const filteredSchools = options.schools.filter((s) =>
     s.name.toLowerCase().includes(schoolSearch.toLowerCase())
   );
 
-  const currentSortLabel =
-    SORT_OPTIONS.find((s) => s.value === currentSort)?.label || "Popularity";
-
   return (
     <>
-      {/* Mobile Sticky Action Bar */}
-      <div className="lg:hidden sticky top-[61px] sm:top-[69px] z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 py-2.5 flex items-center gap-3 shadow-2xs mb-4">
-        {/* Filter Trigger Button (Yellow as shown in mockup) */}
+      {/* Mobile Top Fixed/Sticky Action Bar */}
+      <div className="lg:hidden sticky top-[124px] md:top-[80px] z-30 bg-white/95 backdrop-blur-md border-y border-slate-200 px-4 py-2.5 flex items-center gap-3 shadow-xs mb-3 -mx-4 sm:-mx-6">
+        {/* Filter Trigger Button */}
         <button
           type="button"
           onClick={() => setFilterOpen(true)}
-          className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-brand-yellow-400 py-2.5 px-4 text-xs font-black text-brand-navy-950 shadow-xs active:scale-98 transition-all"
+          className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-brand-yellow-400 py-3 px-4 text-xs font-black text-brand-navy-950 shadow-xs active:scale-98 hover:bg-yellow-300 transition-all tracking-wider uppercase cursor-pointer"
         >
           <SlidersHorizontal className="h-4 w-4" />
-          <span>Filter {activeCount > 0 ? `(${activeCount})` : ""}</span>
+          <span>FILTER {activeCount > 0 ? `(${activeCount})` : ""}</span>
         </button>
 
         {/* Sort Trigger Button */}
         <button
           type="button"
           onClick={() => setSortOpen(true)}
-          className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-2.5 px-4 text-xs font-bold text-brand-navy-950 shadow-2xs active:scale-98 hover:bg-slate-50 transition-all truncate"
+          className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white py-3 px-4 text-xs font-bold text-brand-navy-950 shadow-2xs active:scale-98 hover:bg-slate-50 transition-all truncate tracking-wider uppercase cursor-pointer"
         >
           <ArrowUpDown className="h-3.5 w-3.5 text-slate-500 shrink-0" />
-          <span className="truncate">Sort</span>
+          <span className="truncate">SORT</span>
         </button>
       </div>
 
-      {/* ========================================================================= */}
       {/* 1. Filter Bottom Sheet Drawer */}
-      {/* ========================================================================= */}
       {filterOpen && (
         <div className="fixed inset-0 z-50 flex flex-col justify-end">
           {/* Backdrop */}
@@ -171,14 +167,7 @@ export function MobileFilterDrawer({
                 </h4>
                 <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
                   {options.categories.map((cat) => {
-                    const isChecked =
-                      draftFilters.category === cat.slug ||
-                      (cat.slug === "summer-dress" &&
-                        (draftFilters.season?.toLowerCase() === "summer" || draftFilters.category === "summer-dress")) ||
-                      (cat.slug === "winter-dress" &&
-                        (draftFilters.season?.toLowerCase() === "winter" || draftFilters.category === "winter-dress")) ||
-                      (cat.slug === "school-uniforms" &&
-                        (draftFilters.category === "school-uniforms" && !draftFilters.season));
+                    const isChecked = isMultiChecked("category", cat.slug);
 
                     return (
                       <label
@@ -189,23 +178,7 @@ export function MobileFilterDrawer({
                           <input
                             type="checkbox"
                             checked={isChecked}
-                            onChange={() => {
-                              if (cat.slug === "summer-dress") {
-                                setDraftFilters((prev) => ({
-                                  ...prev,
-                                  category: isChecked ? undefined : "school-uniforms",
-                                  season: isChecked ? undefined : "SUMMER",
-                                }));
-                              } else if (cat.slug === "winter-dress") {
-                                setDraftFilters((prev) => ({
-                                  ...prev,
-                                  category: isChecked ? undefined : "school-uniforms",
-                                  season: isChecked ? undefined : "WINTER",
-                                }));
-                              } else {
-                                handleCheckboxChange("category", cat.slug);
-                              }
-                            }}
+                            onChange={() => handleMultiToggle("category", cat.slug)}
                             className="h-4 w-4 rounded-sm accent-brand-navy-900"
                           />
                           <span
@@ -243,29 +216,95 @@ export function MobileFilterDrawer({
                   />
                 </div>
                 <div className="max-h-40 overflow-y-auto space-y-2">
-                  {filteredSchools.map((s) => (
-                    <label
-                      key={s.id}
-                      className="flex items-center justify-between text-xs py-1 cursor-pointer"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <input
-                          type="checkbox"
-                          checked={draftFilters.school === s.slug}
-                          onChange={() => handleCheckboxChange("school", s.slug)}
-                          className="h-4 w-4 rounded-sm accent-brand-navy-900"
-                        />
-                        <span className={draftFilters.school === s.slug ? "font-bold text-brand-navy-950" : "text-slate-700"}>
-                          {s.name}
-                        </span>
-                      </div>
-                      {s.count !== undefined && s.count > 0 && (
-                        <span className="text-[11px] text-slate-400">({s.count})</span>
-                      )}
-                    </label>
-                  ))}
+                  {filteredSchools.map((s) => {
+                    const isChecked = isMultiChecked("school", s.slug);
+                    return (
+                      <label
+                        key={s.id}
+                        className="flex items-center justify-between text-xs py-1 cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => handleMultiToggle("school", s.slug)}
+                            className="h-4 w-4 rounded-sm accent-brand-navy-900"
+                          />
+                          <span className={isChecked ? "font-bold text-brand-navy-950" : "text-slate-700"}>
+                            {s.name}
+                          </span>
+                        </div>
+                        {s.count !== undefined && s.count > 0 && (
+                          <span className="text-[11px] text-slate-400">({s.count})</span>
+                        )}
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
+
+              {/* Brand */}
+              {options.brands && options.brands.length > 0 && (
+                <div>
+                  <h4 className="text-xs font-black text-brand-navy-950 uppercase tracking-wider mb-2.5">
+                    Brand
+                  </h4>
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                    {options.brands.map((b) => {
+                      const isChecked = isMultiChecked("brand", b.slug);
+                      return (
+                        <label
+                          key={b.id}
+                          className="flex items-center justify-between text-xs py-1 cursor-pointer"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={() => handleMultiToggle("brand", b.slug)}
+                              className="h-4 w-4 rounded-sm accent-brand-navy-900"
+                            />
+                            <span className={isChecked ? "font-bold text-brand-navy-950" : "text-slate-700"}>
+                              {b.name}
+                            </span>
+                          </div>
+                          {b.count !== undefined && b.count > 0 && (
+                            <span className="text-[11px] text-slate-400">({b.count})</span>
+                          )}
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Season */}
+              {options.seasons && options.seasons.length > 0 && (
+                <div>
+                  <h4 className="text-xs font-black text-brand-navy-950 uppercase tracking-wider mb-2.5">
+                    Season
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {options.seasons.map((s) => {
+                      const isSelected = isMultiChecked("season", s.value);
+                      return (
+                        <button
+                          key={s.value}
+                          type="button"
+                          onClick={() => handleMultiToggle("season", s.value)}
+                          className={`rounded-xl px-3.5 py-1.5 text-xs font-bold transition-all ${
+                            isSelected
+                              ? "bg-brand-navy-950 text-white shadow-xs"
+                              : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                          }`}
+                        >
+                          {s.label} {s.count !== undefined ? `(${s.count})` : ""}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               {/* Gender */}
               <div>
@@ -274,12 +313,12 @@ export function MobileFilterDrawer({
                 </h4>
                 <div className="flex flex-wrap gap-2">
                   {options.genders.map((g) => {
-                    const isSelected = draftFilters.gender === g.value;
+                    const isSelected = isMultiChecked("gender", g.value);
                     return (
                       <button
                         key={g.value}
                         type="button"
-                        onClick={() => handleCheckboxChange("gender", g.value)}
+                        onClick={() => handleMultiToggle("gender", g.value)}
                         className={`rounded-xl px-3.5 py-1.5 text-xs font-bold transition-all ${
                           isSelected
                             ? "bg-brand-navy-950 text-white shadow-xs"
@@ -298,28 +337,31 @@ export function MobileFilterDrawer({
                 <h4 className="text-xs font-black text-brand-navy-950 uppercase tracking-wider mb-2.5">
                   Class / Grade
                 </h4>
-                <div className="space-y-2">
-                  {options.classes.map((c) => (
-                    <label
-                      key={c.value}
-                      className="flex items-center justify-between text-xs py-1 cursor-pointer"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <input
-                          type="checkbox"
-                          checked={draftFilters.classGrade === c.value}
-                          onChange={() => handleCheckboxChange("classGrade", c.value)}
-                          className="h-4 w-4 rounded-sm accent-brand-navy-900"
-                        />
-                        <span className={draftFilters.classGrade === c.value ? "font-bold text-brand-navy-950" : "text-slate-700"}>
-                          {c.label}
-                        </span>
-                      </div>
-                      {c.count !== undefined && c.count > 0 && (
-                        <span className="text-[11px] text-slate-400">({c.count})</span>
-                      )}
-                    </label>
-                  ))}
+                <div className="space-y-2 max-h-40 overflow-y-auto">
+                  {options.classes.map((c) => {
+                    const isChecked = isMultiChecked("classGrade", c.value);
+                    return (
+                      <label
+                        key={c.value}
+                        className="flex items-center justify-between text-xs py-1 cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => handleMultiToggle("classGrade", c.value)}
+                            className="h-4 w-4 rounded-sm accent-brand-navy-900"
+                          />
+                          <span className={isChecked ? "font-bold text-brand-navy-950" : "text-slate-700"}>
+                            {c.label}
+                          </span>
+                        </div>
+                        {c.count !== undefined && c.count > 0 && (
+                          <span className="text-[11px] text-slate-400">({c.count})</span>
+                        )}
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -330,17 +372,16 @@ export function MobileFilterDrawer({
                 </h4>
                 <div className="flex flex-wrap gap-2">
                   {options.sizes.map((s) => {
-                    const activeSizes = draftFilters.size ? draftFilters.size.split(",") : [];
-                    const isSelected = activeSizes.includes(s.value);
+                    const isSelected = isMultiChecked("size", s.value);
                     return (
                       <button
                         key={s.value}
                         type="button"
-                        onClick={() => handleSizeToggle(s.value)}
-                        className={`min-w-[40px] rounded-xl px-3 py-1.5 text-xs font-bold ${
+                        onClick={() => handleMultiToggle("size", s.value)}
+                        className={`min-w-[40px] rounded-xl px-3 py-1.5 text-xs font-bold transition-all ${
                           isSelected
-                            ? "bg-brand-navy-950 text-white"
-                            : "bg-slate-100 text-slate-700"
+                            ? "bg-brand-navy-950 text-white shadow-xs"
+                            : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                         }`}
                       >
                         {s.label}
@@ -357,23 +398,18 @@ export function MobileFilterDrawer({
                 </h4>
                 <div className="flex flex-wrap gap-3">
                   {options.colors.map((c) => {
-                    const isSelected = draftFilters.color === c.name;
+                    const isSelected = isMultiChecked("color", c.name);
                     return (
                       <button
                         key={c.name}
                         type="button"
-                        onClick={() =>
-                          setDraftFilters((prev) => ({
-                            ...prev,
-                            color: isSelected ? undefined : c.name,
-                          }))
-                        }
-                        className={`h-7 w-7 rounded-full border shadow-2xs flex items-center justify-center ${
+                        onClick={() => handleMultiToggle("color", c.name)}
+                        className={`h-7 w-7 rounded-full border shadow-2xs flex items-center justify-center transition-all ${
                           c.bgClass
                         } ${
                           isSelected
                             ? "ring-2 ring-brand-navy-950 ring-offset-2 scale-110"
-                            : "border-slate-200"
+                            : "border-slate-200 hover:scale-105"
                         }`}
                       >
                         {isSelected && (
@@ -562,9 +598,7 @@ export function MobileFilterDrawer({
         </div>
       )}
 
-      {/* ========================================================================= */}
       {/* 2. Sort Bottom Sheet Drawer */}
-      {/* ========================================================================= */}
       {sortOpen && (
         <div className="fixed inset-0 z-50 flex flex-col justify-end">
           <div
@@ -615,3 +649,4 @@ export function MobileFilterDrawer({
     </>
   );
 }
+
