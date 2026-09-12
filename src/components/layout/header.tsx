@@ -18,7 +18,16 @@ import {
   HelpCircle,
   Shield,
   X,
+  LogOut,
+  LogIn,
+  GraduationCap,
+  FolderTree,
+  ChevronDown,
+  Sparkles,
+  Layout,
+  ExternalLink,
 } from "lucide-react";
+import { toast } from "sonner";
 import { siteConfig } from "@/config/site";
 import { Drawer } from "@/components/ui/drawer";
 import { cn } from "@/lib/utils";
@@ -29,6 +38,44 @@ export function Header() {
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = React.useState("");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+
+  // Account Popover Dropdown State
+  const [isAccountMenuOpen, setIsAccountMenuOpen] = React.useState(false);
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = React.useState(false);
+  const accountMenuRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    // Check if admin key exists in localStorage
+    if (typeof window !== "undefined") {
+      const key = localStorage.getItem("tirupati_admin_key");
+      setIsAdminLoggedIn(Boolean(key && key.trim()));
+    }
+  }, [pathname, isAccountMenuOpen]);
+
+  // Click outside listener to close account menu
+  React.useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        accountMenuRef.current &&
+        !accountMenuRef.current.contains(event.target as Node)
+      ) {
+        setIsAccountMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleLogout = () => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("tirupati_admin_key");
+      localStorage.removeItem("user_session");
+      setIsAdminLoggedIn(false);
+      setIsAccountMenuOpen(false);
+      toast.success("Logged out successfully");
+      router.push("/");
+    }
+  };
 
   React.useEffect(() => {
     const q = searchParams.get("q") || searchParams.get("search") || "";
@@ -115,7 +162,7 @@ export function Header() {
           <div className="flex items-center gap-3">
             <button
               onClick={() => setIsMobileMenuOpen(true)}
-              className="lg:hidden rounded-lg p-1.5 text-brand-navy-950 hover:bg-slate-100 transition-colors"
+              className="lg:hidden rounded-lg p-1.5 text-brand-navy-950 hover:bg-slate-100 transition-colors cursor-pointer"
               aria-label="Open mobile navigation menu"
             >
               <Menu className="h-6 w-6" />
@@ -185,7 +232,7 @@ export function Header() {
             <button
               type="submit"
               aria-label="Submit search"
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-brand-navy-950"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-brand-navy-950 cursor-pointer"
             >
               <Search className="h-3.5 w-3.5" />
             </button>
@@ -193,7 +240,7 @@ export function Header() {
               <button
                 type="button"
                 onClick={handleClearSearch}
-                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition-colors cursor-pointer"
                 aria-label="Clear search"
               >
                 <X className="h-3.5 w-3.5" />
@@ -201,21 +248,156 @@ export function Header() {
             )}
           </form>
 
-          {/* Action Icons: Account, Wishlist, Cart */}
+          {/* Action Icons: Account Popover, Wishlist, Cart */}
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-            {/* Account */}
-            <Link
-              href="/account"
-              className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full text-brand-navy-950 hover:bg-slate-100 transition-colors"
-              aria-label="User account"
-            >
-              <User className="h-4.5 w-4.5" />
-            </Link>
+            {/* Account Icon with Interactive Dropdown */}
+            <div className="relative" ref={accountMenuRef}>
+              <button
+                type="button"
+                onClick={() => setIsAccountMenuOpen(!isAccountMenuOpen)}
+                className={cn(
+                  "flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full text-brand-navy-950 hover:bg-slate-100 transition-colors relative cursor-pointer",
+                  isAccountMenuOpen && "bg-slate-100 ring-2 ring-brand-navy-950/20"
+                )}
+                aria-label="User account menu"
+                aria-expanded={isAccountMenuOpen}
+              >
+                <User className="h-4.5 w-4.5" />
+                {isAdminLoggedIn && (
+                  <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />
+                )}
+              </button>
+
+              {/* Account Dropdown Menu */}
+              {isAccountMenuOpen && (
+                <div className="absolute right-0 mt-2 w-64 rounded-2xl bg-white p-2 shadow-2xl border border-slate-200 z-50 animate-in fade-in zoom-in-95 duration-150">
+                  {/* Account Header / Status */}
+                  <div className="px-3 py-2.5 border-b border-slate-100">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black text-brand-navy-950 uppercase tracking-wider">
+                        {isAdminLoggedIn ? "Admin Session" : "My Account"}
+                      </span>
+                      {isAdminLoggedIn && (
+                        <span className="rounded-full bg-brand-navy-950 px-2 py-0.5 text-[9px] font-black uppercase text-amber-400">
+                          Super-Admin
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-slate-500 mt-0.5 truncate">
+                      {isAdminLoggedIn
+                        ? "Full Store & Catalog Access"
+                        : "Sign in for personalized orders"}
+                    </p>
+                  </div>
+
+                  {/* Links List */}
+                  <div className="py-1.5 space-y-0.5">
+                    {isAdminLoggedIn ? (
+                      <>
+                        <Link
+                          href="/admin"
+                          onClick={() => setIsAccountMenuOpen(false)}
+                          className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-brand-navy-950 hover:bg-amber-50/70 hover:text-amber-900 transition-colors"
+                        >
+                          <Shield className="h-4 w-4 text-amber-500" />
+                          <span>Super-Admin Hub</span>
+                        </Link>
+                        <Link
+                          href="/admin/schools"
+                          onClick={() => setIsAccountMenuOpen(false)}
+                          className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 hover:text-brand-navy-950 transition-colors"
+                        >
+                          <GraduationCap className="h-4 w-4 text-slate-500" />
+                          <span>Schools &amp; Bindings</span>
+                        </Link>
+                        <Link
+                          href="/admin/products"
+                          onClick={() => setIsAccountMenuOpen(false)}
+                          className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 hover:text-brand-navy-950 transition-colors"
+                        >
+                          <ShoppingBag className="h-4 w-4 text-slate-500" />
+                          <span>Products &amp; Stock</span>
+                        </Link>
+                        <Link
+                          href="/admin/categories"
+                          onClick={() => setIsAccountMenuOpen(false)}
+                          className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 hover:text-brand-navy-950 transition-colors"
+                        >
+                          <FolderTree className="h-4 w-4 text-slate-500" />
+                          <span>Category CMS</span>
+                        </Link>
+                        <Link
+                          href="/account"
+                          onClick={() => setIsAccountMenuOpen(false)}
+                          className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 hover:text-brand-navy-950 transition-colors"
+                        >
+                          <User className="h-4 w-4 text-slate-500" />
+                          <span>Customer View</span>
+                        </Link>
+                      </>
+                    ) : (
+                      <>
+                        <Link
+                          href="/account"
+                          onClick={() => setIsAccountMenuOpen(false)}
+                          className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-brand-navy-950 hover:bg-slate-100 transition-colors"
+                        >
+                          <LogIn className="h-4 w-4 text-slate-600" />
+                          <span>Sign In / Customer Account</span>
+                        </Link>
+                        <Link
+                          href="/track-order"
+                          onClick={() => setIsAccountMenuOpen(false)}
+                          className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 hover:text-brand-navy-950 transition-colors"
+                        >
+                          <PackageCheck className="h-4 w-4 text-slate-500" />
+                          <span>Orders &amp; Tracking</span>
+                        </Link>
+                        <Link
+                          href="/admin"
+                          onClick={() => setIsAccountMenuOpen(false)}
+                          className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-amber-700 bg-amber-50/60 hover:bg-amber-100 transition-colors"
+                        >
+                          <Shield className="h-4 w-4 text-amber-500" />
+                          <span>Admin Login Portal</span>
+                        </Link>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Logout Action */}
+                  <div className="pt-1.5 mt-1 border-t border-slate-100">
+                    {isAdminLoggedIn ? (
+                      <button
+                        type="button"
+                        onClick={handleLogout}
+                        className="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                      >
+                        <span className="flex items-center gap-2">
+                          <LogOut className="h-4 w-4" />
+                          <span>Logout / Lock Session</span>
+                        </span>
+                        <span className="text-[10px] uppercase font-mono text-rose-400">Exit</span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
+                      >
+                        <LogOut className="h-4 w-4 text-slate-400" />
+                        <span>Sign Out / Clear Cache</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Wishlist */}
             <Link
               href="/wishlist"
-              className="relative flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full text-brand-navy-950 hover:bg-slate-100 transition-colors"
+              className="relative flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full text-brand-navy-950 hover:bg-slate-100 transition-colors cursor-pointer"
               aria-label="Wishlist"
             >
               <Heart className="h-4.5 w-4.5" />
@@ -227,7 +409,7 @@ export function Header() {
             {/* Cart with Yellow Badge */}
             <Link
               href="/cart"
-              className="relative flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full text-brand-navy-950 hover:bg-slate-100 transition-colors"
+              className="relative flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full text-brand-navy-950 hover:bg-slate-100 transition-colors cursor-pointer"
               aria-label="Shopping Cart"
             >
               <ShoppingBag className="h-4.5 w-4.5" />
@@ -251,7 +433,7 @@ export function Header() {
             <button
               type="submit"
               aria-label="Submit search"
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-brand-navy-950"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-brand-navy-950 cursor-pointer"
             >
               <Search className="h-3.5 w-3.5" />
             </button>
@@ -259,7 +441,7 @@ export function Header() {
               <button
                 type="button"
                 onClick={handleClearSearch}
-                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition-colors cursor-pointer"
                 aria-label="Clear search"
               >
                 <X className="h-3.5 w-3.5" />
@@ -269,7 +451,6 @@ export function Header() {
         </div>
       </div>
 
-
       {/* Mobile Drawer */}
       <Drawer
         isOpen={isMobileMenuOpen}
@@ -277,6 +458,67 @@ export function Header() {
         title="TirupatiBalajee Dresses"
       >
         <div className="flex flex-col gap-6 py-2">
+          {/* Account Profile Bar in Mobile Drawer */}
+          <div className="rounded-2xl bg-stone-100 p-3.5 border border-stone-200">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="h-9 w-9 rounded-full bg-brand-navy-950 text-white flex items-center justify-center font-bold text-xs">
+                  <User className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-xs font-black text-brand-navy-950">
+                    {isAdminLoggedIn ? "Super Admin Account" : "Storefront User"}
+                  </p>
+                  <p className="text-[10px] text-stone-500">
+                    {isAdminLoggedIn ? "Logged in with Admin Key" : "Guest / Customer"}
+                  </p>
+                </div>
+              </div>
+
+              {isAdminLoggedIn ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleLogout();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="rounded-lg bg-rose-50 border border-rose-200 px-2.5 py-1 text-[10px] font-bold text-rose-600 hover:bg-rose-100 flex items-center gap-1 cursor-pointer"
+                >
+                  <LogOut className="h-3 w-3" />
+                  <span>Logout</span>
+                </button>
+              ) : (
+                <Link
+                  href="/account"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="rounded-lg bg-brand-navy-950 px-2.5 py-1 text-[10px] font-bold text-amber-400 hover:bg-stone-900 flex items-center gap-1"
+                >
+                  <LogIn className="h-3 w-3" />
+                  <span>Login</span>
+                </Link>
+              )}
+            </div>
+
+            {isAdminLoggedIn && (
+              <div className="mt-3 pt-2.5 border-t border-stone-200/80 flex items-center gap-2">
+                <Link
+                  href="/admin"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex-1 rounded-lg bg-brand-yellow-400 py-1.5 text-center text-[11px] font-black uppercase tracking-wider text-brand-navy-950"
+                >
+                  Admin Hub
+                </Link>
+                <Link
+                  href="/admin/schools"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex-1 rounded-lg bg-white border border-stone-200 py-1.5 text-center text-[11px] font-bold text-brand-navy-950"
+                >
+                  Schools &amp; Bindings
+                </Link>
+              </div>
+            )}
+          </div>
+
           <div className="flex flex-col gap-1">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
               Categories
