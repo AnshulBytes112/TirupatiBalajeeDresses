@@ -429,16 +429,46 @@ export default function AdminProductsPage() {
         mrp: Number(formMrp),
         sellingPrice: Number(formSellingPrice),
         categoryId: formCategoryId,
-        subcategoryId: formSubcategoryId || null,
-        brandId: formBrandId || null,
+        subcategoryId: formSubcategoryId ? formSubcategoryId.trim() : null,
+        brandId: formBrandId ? formBrandId.trim() : null,
         status: formStatus,
-        isFeatured: formIsFeatured,
-        isBestseller: formIsBestseller,
+        isFeatured: Boolean(formIsFeatured),
+        isBestseller: Boolean(formIsBestseller),
         seoTitle: formSeoTitle.trim() || undefined,
         seoDescription: formSeoDescription.trim() || undefined,
-        images: formImages,
-        variants: formVariants,
-        schools: formSchools,
+        images: formImages.map((img, idx) => ({
+          id: img.id,
+          url: img.url,
+          alt: img.alt || formName.trim(),
+          displayOrder: Number(img.displayOrder ?? idx),
+          isPrimary: Boolean(img.isPrimary),
+        })),
+        variants: formVariants.map((v) => ({
+          id: v.id,
+          size: v.size,
+          color: v.color || null,
+          sku: v.sku.trim(),
+          mrp: v.mrp ? Number(v.mrp) : Number(formMrp),
+          sellingPrice: Number(v.sellingPrice || formSellingPrice),
+          priceOverride: v.priceOverride ? Number(v.priceOverride) : null,
+          isAvailable: v.isAvailable !== false,
+          inventory: v.inventory
+            ? {
+                availableQuantity: Number(v.inventory.availableQuantity || 0),
+                reservedQuantity: Number(v.inventory.reservedQuantity || 0),
+                lowStockThreshold: Number(v.inventory.lowStockThreshold || 5),
+                warehouseLocation: v.inventory.warehouseLocation || null,
+              }
+            : undefined,
+        })),
+        schools: formSchools.map((s) => ({
+          schoolId: s.schoolId,
+          season: s.season,
+          gender: s.gender,
+          classGrade: s.classGrade || null,
+          uniformType: s.uniformType || null,
+          isCompulsory: s.isCompulsory !== false,
+        })),
       };
 
       const url = editingProductId

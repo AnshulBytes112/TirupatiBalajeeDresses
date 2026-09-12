@@ -1181,10 +1181,15 @@ export class ProductRepository extends BaseRepository {
         }
       }
 
-      // 4. Update school uniform links if provided
+      // 4. Update school uniform links if provided (deduplicated)
       if (data.schools !== undefined) {
         await tx.schoolUniform.deleteMany({ where: { productId: id } });
+        const seenKeys = new Set<string>();
         for (const s of data.schools) {
+          const key = `${s.schoolId}-${s.season}-${s.gender}-${s.classGrade || ""}`;
+          if (seenKeys.has(key)) continue;
+          seenKeys.add(key);
+
           await tx.schoolUniform.create({
             data: {
               productId: id,

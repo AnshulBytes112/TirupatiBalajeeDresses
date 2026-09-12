@@ -1,8 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { Suspense } from "react";
-import Link from "next/link";
 import { toast } from "sonner";
 import {
   Truck,
@@ -14,13 +12,13 @@ import {
   X,
   Loader2,
   Search,
-  ChevronRight,
   UploadCloud,
   MapPin,
   Clock,
   ShieldCheck,
   Building,
-  Package,
+  Power,
+  PowerOff,
 } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { SuperAdminNav } from "@/components/admin/super-admin-nav";
@@ -62,8 +60,9 @@ export default function AdminShippingPage() {
   const [searchQuery, setSearchQuery] = React.useState<string>("");
   const [selectedZoneFilter, setSelectedZoneFilter] = React.useState<string>("");
 
-  // Zone Modal
+  // Zone Modal State (Create & Edit)
   const [isZoneModalOpen, setIsZoneModalOpen] = React.useState(false);
+  const [editingZoneId, setEditingZoneId] = React.useState<string | null>(null);
   const [zoneFormData, setZoneFormData] = React.useState({
     name: "",
     code: "",
@@ -77,8 +76,9 @@ export default function AdminShippingPage() {
     isActive: true,
   });
 
-  // Pincode Modal
+  // Pincode Modal State (Create & Edit)
   const [isPincodeModalOpen, setIsPincodeModalOpen] = React.useState(false);
+  const [editingPincodeId, setEditingPincodeId] = React.useState<string | null>(null);
   const [pincodeFormData, setPincodeFormData] = React.useState({
     pincode: "",
     zoneId: "",
@@ -88,6 +88,7 @@ export default function AdminShippingPage() {
     isCodAvailable: true,
     minDeliveryDays: 2,
     maxDeliveryDays: 4,
+    isActive: true,
   });
 
   // CSV Import State
@@ -102,7 +103,7 @@ export default function AdminShippingPage() {
       if (json.success) {
         setZones(json.data);
       }
-    } catch (e) {
+    } catch {
       toast.error("Failed to load shipping zones");
     } finally {
       setIsLoading(false);
@@ -122,7 +123,7 @@ export default function AdminShippingPage() {
       if (json.success) {
         setPincodes(json.data.pincodes);
       }
-    } catch (e) {
+    } catch {
       toast.error("Failed to load pincodes");
     } finally {
       setIsLoading(false);
@@ -134,58 +135,197 @@ export default function AdminShippingPage() {
     fetchPincodes();
   }, [fetchZones, fetchPincodes]);
 
-  const handleCreateZone = async (e: React.FormEvent) => {
+  // ZONE CRUD HANDLERS
+  const handleOpenCreateZone = () => {
+    setEditingZoneId(null);
+    setZoneFormData({
+      name: "",
+      code: "",
+      description: "",
+      shippingCharge: 49,
+      freeShippingThreshold: 499,
+      minDeliveryDays: 2,
+      maxDeliveryDays: 4,
+      isCodAvailable: true,
+      dispatchSla: "Same Day Dispatch",
+      isActive: true,
+    });
+    setIsZoneModalOpen(true);
+  };
+
+  const handleOpenEditZone = (zone: ShippingZone) => {
+    setEditingZoneId(zone.id);
+    setZoneFormData({
+      name: zone.name,
+      code: zone.code,
+      description: zone.description || "",
+      shippingCharge: Number(zone.shippingCharge),
+      freeShippingThreshold: zone.freeShippingThreshold ? Number(zone.freeShippingThreshold) : 0,
+      minDeliveryDays: zone.minDeliveryDays,
+      maxDeliveryDays: zone.maxDeliveryDays,
+      isCodAvailable: zone.isCodAvailable,
+      dispatchSla: zone.dispatchSla || "Same Day Dispatch",
+      isActive: zone.isActive,
+    });
+    setIsZoneModalOpen(true);
+  };
+
+  const handleSaveZone = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch("/api/admin/shipping/zones", {
-        method: "POST",
+      const url = editingZoneId
+        ? `/api/admin/shipping/zones/${editingZoneId}`
+        : `/api/admin/shipping/zones`;
+      const method = editingZoneId ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(zoneFormData),
       });
       const json = await res.json();
       if (json.success) {
-        toast.success("Shipping Zone created successfully!");
+        toast.success(editingZoneId ? "Shipping Zone updated successfully!" : "Shipping Zone created successfully!");
         setIsZoneModalOpen(false);
         fetchZones();
       } else {
-        toast.error(json.message || "Failed to create shipping zone");
+        toast.error(json.message || "Failed to save shipping zone");
       }
     } catch {
-      toast.error("An error occurred");
+      toast.error("An error occurred while saving shipping zone");
     }
   };
 
-  const handleCreatePincode = async (e: React.FormEvent) => {
+  const handleToggleZoneActive = async (zone: ShippingZone) => {
+    try {
+      const res = await fetch(`/api/admin/shipping/zones/${zone.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive: !zone.isActive }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        toast.success(`Zone "${zone.name}" ${!zone.isActive ? "activated" : "deactivated"}`);
+        fetchZones();
+      } else {
+        toast.error(json.message || "Failed to update zone status");
+      }
+    } catch {
+      toast.error("Failed to update zone status");
+    }
+  };
+
+  const handleDeleteZone = async (zone: ShippingZone) => {
+    if (!confirm(`Are you sure you want to delete zone "${zone.name}"? All associated pincode bindings will also be removed.`)) {
+      return;
+    }
+    try {
+      const res = await fetch(`/api/admin/shipping/zones/${zone.id}`, {
+        method: "DELETE",
+      });
+      const json = await res.json();
+      if (json.success) {
+        toast.success(`Zone "${zone.name}" deleted successfully`);
+        fetchZones();
+        fetchPincodes();
+      } else {
+        toast.error(json.message || "Failed to delete zone");
+      }
+    } catch {
+      toast.error("Failed to delete zone");
+    }
+  };
+
+  // PINCODE CRUD HANDLERS
+  const handleOpenCreatePincode = () => {
+    setEditingPincodeId(null);
+    setPincodeFormData({
+      pincode: "",
+      zoneId: zones[0]?.id || "",
+      city: "",
+      state: "",
+      isServiceable: true,
+      isCodAvailable: true,
+      minDeliveryDays: 2,
+      maxDeliveryDays: 4,
+      isActive: true,
+    });
+    setIsPincodeModalOpen(true);
+  };
+
+  const handleOpenEditPincode = (p: ShippingPincode) => {
+    setEditingPincodeId(p.id);
+    setPincodeFormData({
+      pincode: p.pincode,
+      zoneId: p.zoneId,
+      city: p.city || "",
+      state: p.state || "",
+      isServiceable: p.isServiceable,
+      isCodAvailable: p.isCodAvailable !== false,
+      minDeliveryDays: p.minDeliveryDays || 2,
+      maxDeliveryDays: p.maxDeliveryDays || 4,
+      isActive: p.isActive,
+    });
+    setIsPincodeModalOpen(true);
+  };
+
+  const handleSavePincode = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch("/api/admin/shipping/pincodes", {
-        method: "POST",
+      const url = editingPincodeId
+        ? `/api/admin/shipping/pincodes/${editingPincodeId}`
+        : `/api/admin/shipping/pincodes`;
+      const method = editingPincodeId ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(pincodeFormData),
       });
       const json = await res.json();
       if (json.success) {
-        toast.success("Pincode rule saved successfully!");
+        toast.success(editingPincodeId ? "Pincode rule updated successfully!" : "Pincode rule saved successfully!");
         setIsPincodeModalOpen(false);
         fetchPincodes();
       } else {
         toast.error(json.message || "Failed to save pincode rule");
       }
     } catch {
-      toast.error("An error occurred");
+      toast.error("An error occurred while saving pincode rule");
     }
   };
 
-  const handleDeletePincode = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this pincode override?")) return;
+  const handleTogglePincodeServiceable = async (p: ShippingPincode) => {
     try {
-      const res = await fetch(`/api/admin/shipping/pincodes?id=${id}`, {
+      const res = await fetch(`/api/admin/shipping/pincodes/${p.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isServiceable: !p.isServiceable }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        toast.success(`Pincode ${p.pincode} marked as ${!p.isServiceable ? "Serviceable" : "Unserviceable"}`);
+        fetchPincodes();
+      } else {
+        toast.error(json.message || "Failed to update serviceability");
+      }
+    } catch {
+      toast.error("Failed to update serviceability");
+    }
+  };
+
+  const handleDeletePincode = async (id: string, pincode: string) => {
+    if (!confirm(`Are you sure you want to delete rule for pincode ${pincode}?`)) return;
+    try {
+      const res = await fetch(`/api/admin/shipping/pincodes/${id}`, {
         method: "DELETE",
       });
       const json = await res.json();
       if (json.success) {
-        toast.success("Pincode rule deleted");
+        toast.success(`Pincode ${pincode} deleted`);
         fetchPincodes();
+      } else {
+        toast.error(json.message || "Failed to delete pincode");
       }
     } catch {
       toast.error("Failed to delete pincode");
@@ -255,19 +395,14 @@ export default function AdminShippingPage() {
               Refresh
             </button>
             <button
-              onClick={() => setIsZoneModalOpen(true)}
+              onClick={handleOpenCreateZone}
               className="flex items-center gap-1.5 rounded-lg bg-blue-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800"
             >
               <Plus className="h-4 w-4 text-yellow-400" />
               Add Shipping Zone
             </button>
             <button
-              onClick={() => {
-                if (zones.length > 0) {
-                  setPincodeFormData((prev) => ({ ...prev, zoneId: zones[0].id }));
-                }
-                setIsPincodeModalOpen(true);
-              }}
+              onClick={handleOpenCreatePincode}
               className="flex items-center gap-1.5 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-amber-700"
             >
               <MapPin className="h-4 w-4" />
@@ -323,20 +458,34 @@ export default function AdminShippingPage() {
               >
                 <div>
                   <div className="flex items-center justify-between">
-                    <span className="rounded bg-blue-100 px-2 py-0.5 text-xs font-bold text-blue-900">
+                    <span className="rounded bg-blue-100 px-2.5 py-0.5 text-xs font-bold text-blue-900">
                       {zone.code}
                     </span>
-                    <span
-                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${
-                        zone.isActive ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-600"
-                      }`}
-                    >
-                      {zone.isActive ? "Active" : "Inactive"}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleToggleZoneActive(zone)}
+                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold transition ${
+                          zone.isActive
+                            ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-200"
+                            : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                        }`}
+                        title="Click to toggle status"
+                      >
+                        {zone.isActive ? (
+                          <>
+                            <Power className="h-3 w-3" /> Active
+                          </>
+                        ) : (
+                          <>
+                            <PowerOff className="h-3 w-3" /> Inactive
+                          </>
+                        )}
+                      </button>
+                    </div>
                   </div>
 
                   <h3 className="mt-3 text-lg font-bold text-slate-900">{zone.name}</h3>
-                  <p className="mt-1 text-xs text-slate-500">{zone.description || "No description provided."}</p>
+                  <p className="mt-1 text-xs text-slate-500 line-clamp-2">{zone.description || "No description provided."}</p>
 
                   <div className="mt-4 space-y-2 border-t border-slate-100 pt-3 text-xs">
                     <div className="flex justify-between">
@@ -376,6 +525,24 @@ export default function AdminShippingPage() {
 
                 <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-3 text-xs text-slate-500">
                   <span>{zone._count?.pincodes || 0} mapped pincodes</span>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => handleOpenEditZone(zone)}
+                      className="flex items-center gap-1 rounded-md bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-900 hover:bg-blue-100"
+                      title="Edit Zone"
+                    >
+                      <Edit2 className="h-3.5 w-3.5" />
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDeleteZone(zone)}
+                      className="flex items-center gap-1 rounded-md bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-100"
+                      title="Delete Zone"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Delete
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -439,13 +606,15 @@ export default function AdminShippingPage() {
                         {pin.city ? `${pin.city}, ${pin.state || ""}` : "Pan-India Fallback"}
                       </td>
                       <td className="px-4 py-3">
-                        <span
-                          className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${
-                            pin.isServiceable ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-800"
+                        <button
+                          onClick={() => handleTogglePincodeServiceable(pin)}
+                          className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold transition ${
+                            pin.isServiceable ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-200" : "bg-rose-100 text-rose-800 hover:bg-rose-200"
                           }`}
+                          title="Click to toggle serviceability"
                         >
                           {pin.isServiceable ? "Serviceable" : "Unserviceable"}
-                        </span>
+                        </button>
                       </td>
                       <td className="px-4 py-3 text-xs">
                         {pin.isCodAvailable === false ? (
@@ -458,13 +627,22 @@ export default function AdminShippingPage() {
                         {pin.minDeliveryDays ? `${pin.minDeliveryDays}-${pin.maxDeliveryDays} Days` : "Zone Default"}
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <button
-                          onClick={() => handleDeletePincode(pin.id)}
-                          className="rounded p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-600"
-                          title="Delete Pincode"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => handleOpenEditPincode(pin)}
+                            className="rounded p-1.5 text-slate-500 hover:bg-blue-50 hover:text-blue-900"
+                            title="Edit Pincode"
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeletePincode(pin.id, pin.pincode)}
+                            className="rounded p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600"
+                            title="Delete Pincode"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -522,12 +700,14 @@ export default function AdminShippingPage() {
           </div>
         )}
 
-        {/* Modal: Create Zone */}
+        {/* Modal: Create & Edit Zone */}
         {isZoneModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
             <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-2xl">
               <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-                <h3 className="text-lg font-bold text-slate-900">Add New Shipping Zone</h3>
+                <h3 className="text-lg font-bold text-slate-900">
+                  {editingZoneId ? "Edit Shipping Zone" : "Add New Shipping Zone"}
+                </h3>
                 <button
                   onClick={() => setIsZoneModalOpen(false)}
                   className="rounded-lg p-1 text-slate-400 hover:bg-slate-100"
@@ -536,7 +716,7 @@ export default function AdminShippingPage() {
                 </button>
               </div>
 
-              <form onSubmit={handleCreateZone} className="mt-4 space-y-4 text-sm">
+              <form onSubmit={handleSaveZone} className="mt-4 space-y-4 text-sm">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700">Zone Name</label>
                   <input
@@ -571,6 +751,17 @@ export default function AdminShippingPage() {
                       className="mt-1 w-full rounded-lg border border-slate-300 p-2.5 text-sm focus:border-blue-900 focus:outline-none"
                     />
                   </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700">Description (Optional)</label>
+                  <input
+                    type="text"
+                    value={zoneFormData.description}
+                    onChange={(e) => setZoneFormData({ ...zoneFormData, description: e.target.value })}
+                    placeholder="e.g. Same city and local region express delivery"
+                    className="mt-1 w-full rounded-lg border border-slate-300 p-2.5 text-sm focus:border-blue-900 focus:outline-none"
+                  />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
@@ -619,17 +810,31 @@ export default function AdminShippingPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 pt-2">
-                  <input
-                    type="checkbox"
-                    id="isCod"
-                    checked={zoneFormData.isCodAvailable}
-                    onChange={(e) => setZoneFormData({ ...zoneFormData, isCodAvailable: e.target.checked })}
-                    className="h-4 w-4 rounded border-slate-300 text-blue-900 focus:ring-blue-900"
-                  />
-                  <label htmlFor="isCod" className="text-xs font-medium text-slate-700">
-                    Enable Cash on Delivery (COD) for this zone
-                  </label>
+                <div className="flex items-center gap-4 pt-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="isCod"
+                      checked={zoneFormData.isCodAvailable}
+                      onChange={(e) => setZoneFormData({ ...zoneFormData, isCodAvailable: e.target.checked })}
+                      className="h-4 w-4 rounded border-slate-300 text-blue-900 focus:ring-blue-900"
+                    />
+                    <label htmlFor="isCod" className="text-xs font-medium text-slate-700">
+                      Enable COD
+                    </label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="isActiveZone"
+                      checked={zoneFormData.isActive}
+                      onChange={(e) => setZoneFormData({ ...zoneFormData, isActive: e.target.checked })}
+                      className="h-4 w-4 rounded border-slate-300 text-blue-900 focus:ring-blue-900"
+                    />
+                    <label htmlFor="isActiveZone" className="text-xs font-medium text-slate-700">
+                      Active Status
+                    </label>
+                  </div>
                 </div>
 
                 <div className="flex justify-end gap-2 border-t border-slate-200 pt-4">
@@ -644,7 +849,7 @@ export default function AdminShippingPage() {
                     type="submit"
                     className="rounded-lg bg-blue-900 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-800"
                   >
-                    Save Zone
+                    {editingZoneId ? "Update Zone" : "Save Zone"}
                   </button>
                 </div>
               </form>
@@ -652,12 +857,14 @@ export default function AdminShippingPage() {
           </div>
         )}
 
-        {/* Modal: Create Pincode */}
+        {/* Modal: Create & Edit Pincode */}
         {isPincodeModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
             <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-2xl">
               <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-                <h3 className="text-lg font-bold text-slate-900">Add / Edit Pincode Rule</h3>
+                <h3 className="text-lg font-bold text-slate-900">
+                  {editingPincodeId ? "Edit Pincode Rule" : "Add Pincode Rule"}
+                </h3>
                 <button
                   onClick={() => setIsPincodeModalOpen(false)}
                   className="rounded-lg p-1 text-slate-400 hover:bg-slate-100"
@@ -666,7 +873,7 @@ export default function AdminShippingPage() {
                 </button>
               </div>
 
-              <form onSubmit={handleCreatePincode} className="mt-4 space-y-4 text-sm">
+              <form onSubmit={handleSavePincode} className="mt-4 space-y-4 text-sm">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700">6-Digit PIN Code</label>
                   <input
@@ -686,6 +893,7 @@ export default function AdminShippingPage() {
                     value={pincodeFormData.zoneId}
                     onChange={(e) => setPincodeFormData({ ...pincodeFormData, zoneId: e.target.value })}
                     className="mt-1 w-full rounded-lg border border-slate-300 bg-white p-2.5 text-sm focus:border-blue-900 focus:outline-none"
+                    required
                   >
                     {zones.map((z) => (
                       <option key={z.id} value={z.id}>
@@ -718,6 +926,56 @@ export default function AdminShippingPage() {
                   </div>
                 </div>
 
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700">Min Delivery Days</label>
+                    <input
+                      type="number"
+                      min={1}
+                      value={pincodeFormData.minDeliveryDays}
+                      onChange={(e) => setPincodeFormData({ ...pincodeFormData, minDeliveryDays: Number(e.target.value) })}
+                      className="mt-1 w-full rounded-lg border border-slate-300 p-2.5 text-sm focus:border-blue-900 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700">Max Delivery Days</label>
+                    <input
+                      type="number"
+                      min={1}
+                      value={pincodeFormData.maxDeliveryDays}
+                      onChange={(e) => setPincodeFormData({ ...pincodeFormData, maxDeliveryDays: Number(e.target.value) })}
+                      className="mt-1 w-full rounded-lg border border-slate-300 p-2.5 text-sm focus:border-blue-900 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4 pt-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="isServiceablePin"
+                      checked={pincodeFormData.isServiceable}
+                      onChange={(e) => setPincodeFormData({ ...pincodeFormData, isServiceable: e.target.checked })}
+                      className="h-4 w-4 rounded border-slate-300 text-blue-900 focus:ring-blue-900"
+                    />
+                    <label htmlFor="isServiceablePin" className="text-xs font-medium text-slate-700">
+                      Serviceable
+                    </label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="isCodPin"
+                      checked={pincodeFormData.isCodAvailable}
+                      onChange={(e) => setPincodeFormData({ ...pincodeFormData, isCodAvailable: e.target.checked })}
+                      className="h-4 w-4 rounded border-slate-300 text-blue-900 focus:ring-blue-900"
+                    />
+                    <label htmlFor="isCodPin" className="text-xs font-medium text-slate-700">
+                      COD Available
+                    </label>
+                  </div>
+                </div>
+
                 <div className="flex justify-end gap-2 border-t border-slate-200 pt-4">
                   <button
                     type="button"
@@ -730,7 +988,7 @@ export default function AdminShippingPage() {
                     type="submit"
                     className="rounded-lg bg-blue-900 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-800"
                   >
-                    Save Rule
+                    {editingPincodeId ? "Update Rule" : "Save Rule"}
                   </button>
                 </div>
               </form>

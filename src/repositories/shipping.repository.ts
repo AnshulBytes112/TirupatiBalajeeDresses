@@ -225,6 +225,24 @@ export class ShippingRepository extends BaseRepository {
     });
   }
 
+  async getPincodeById(id: string) {
+    return this.db.shippingPincode.findUnique({
+      where: { id },
+      include: { zone: true },
+    });
+  }
+
+  async updatePincode(
+    id: string,
+    data: Prisma.ShippingPincodeUpdateInput
+  ) {
+    return this.db.shippingPincode.update({
+      where: { id },
+      data,
+      include: { zone: true },
+    });
+  }
+
   async deletePincode(id: string) {
     return this.db.shippingPincode.delete({ where: { id } });
   }

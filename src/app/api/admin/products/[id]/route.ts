@@ -60,6 +60,14 @@ export async function PATCH(req: NextRequest, { params }: RouteProps) {
 }
 
 /**
+ * PUT /api/admin/products/[id]
+ * Alias for PATCH to support full product updates safely.
+ */
+export async function PUT(req: NextRequest, { params }: RouteProps) {
+  return PATCH(req, { params });
+}
+
+/**
  * DELETE /api/admin/products/[id]
  * Archive / deactivate product (soft archive operation to preserve transactional integrity).
  */
