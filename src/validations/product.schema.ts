@@ -7,26 +7,8 @@ export const getProductsQuerySchema = z.object({
   subcategory: z.string().optional(),
   school: z.string().optional(),
   brand: z.string().optional(),
-  gender: z
-    .string()
-    .optional()
-    .transform((val) => {
-      if (!val) return undefined;
-      const upper = val.toUpperCase();
-      return upper === "BOYS" || upper === "GIRLS" || upper === "UNISEX"
-        ? (upper as "BOYS" | "GIRLS" | "UNISEX")
-        : undefined;
-    }),
-  season: z
-    .string()
-    .optional()
-    .transform((val) => {
-      if (!val) return undefined;
-      const upper = val.toUpperCase();
-      return upper === "SUMMER" || upper === "WINTER" || upper === "ALL_SEASON"
-        ? (upper as "SUMMER" | "WINTER" | "ALL_SEASON")
-        : undefined;
-    }),
+  gender: z.string().optional(),
+  season: z.string().optional(),
   classGrade: z.string().optional(),
   class: z.string().optional(),
   size: z.string().optional(),

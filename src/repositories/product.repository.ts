@@ -26,6 +26,7 @@ export class ProductRepository extends BaseRepository {
       isBestseller,
       isFeatured,
       inStock,
+      outOfStock,
       hasDiscount,
       minPrice,
       maxPrice,
@@ -54,146 +55,186 @@ export class ProductRepository extends BaseRepository {
       ? (season.split(",").map((s) => s.trim().toUpperCase()).filter((s) => ["SUMMER", "WINTER", "ALL_SEASON"].includes(s)) as ("SUMMER" | "WINTER" | "ALL_SEASON")[])
       : undefined;
 
-    const where: Prisma.ProductWhereInput = {
-      isActive: true,
-      isDeleted: false,
-      ...(categoryList && categoryList.length > 0
-        ? {
-            OR: [
-              { category: { slug: { in: categoryList } } },
-              { subcategory: { slug: { in: categoryList } } },
-            ],
-          }
-        : {}),
-      ...(subcategoryList && subcategoryList.length > 0
-        ? { subcategory: { slug: { in: subcategoryList } } }
-        : {}),
-      ...(brandList && brandList.length > 0
-        ? {
-            brand: {
-              OR: [
-                { slug: { in: brandList } },
-                ...brandList.map((b) => ({ name: { contains: b, mode: "insensitive" as const } })),
-              ],
+    const andConditions: Prisma.ProductWhereInput[] = [
+      { isActive: true },
+      { isDeleted: false },
+    ];
+
+    // Category filter: match direct category slug, direct category name, subcategory slug/name, or parent category slug
+    if (categoryList && categoryList.length > 0) {
+      andConditions.push({
+        OR: [
+          { category: { slug: { in: categoryList } } },
+          { subcategory: { slug: { in: categoryList } } },
+          { category: { parent: { slug: { in: categoryList } } } },
+          { category: { name: { in: categoryList, mode: "insensitive" } } },
+        ],
+      });
+    }
+
+    // Subcategory filter
+    if (subcategoryList && subcategoryList.length > 0) {
+      andConditions.push({
+        subcategory: {
+          OR: [
+            { slug: { in: subcategoryList } },
+            { name: { in: subcategoryList, mode: "insensitive" } },
+          ],
+        },
+      });
+    }
+
+    // Brand filter
+    if (brandList && brandList.length > 0) {
+      andConditions.push({
+        brand: {
+          OR: [
+            { slug: { in: brandList } },
+            ...brandList.map((b) => ({ name: { contains: b, mode: "insensitive" as const } })),
+          ],
+        },
+      });
+    }
+
+    // School uniform criteria (school, gender, season, classGrade)
+    const suConditions: Prisma.SchoolUniformWhereInput[] = [];
+    if (schoolList && schoolList.length > 0) {
+      suConditions.push({
+        school: {
+          OR: [
+            { slug: { in: schoolList } },
+            ...schoolList.map((s) => ({ name: { contains: s, mode: "insensitive" as const } })),
+          ],
+        },
+      });
+    }
+    if (genderList && genderList.length > 0) {
+      suConditions.push({
+        gender: { in: [...genderList, "UNISEX"] },
+      });
+    }
+    if (seasonList && seasonList.length > 0) {
+      suConditions.push({
+        season: { in: [...seasonList, "ALL_SEASON"] },
+      });
+    }
+    if (classList && classList.length > 0) {
+      suConditions.push({
+        OR: classList.map((c) => ({
+          classGrade: { contains: c, mode: "insensitive" as const },
+        })),
+      });
+    }
+
+    if (suConditions.length > 0) {
+      andConditions.push({
+        schoolUniforms: {
+          some: {
+            AND: suConditions,
+          },
+        },
+      });
+    }
+
+    // Variant criteria (size, color, inStock)
+    const variantConditions: Prisma.ProductVariantWhereInput[] = [{ isDeleted: false }];
+    if (sizeList && sizeList.length > 0) {
+      variantConditions.push({
+        size: { in: sizeList, mode: "insensitive" },
+      });
+    }
+    if (colorList && colorList.length > 0) {
+      variantConditions.push({
+        OR: colorList.map((c) => ({
+          color: { contains: c, mode: "insensitive" as const },
+        })),
+      });
+    }
+    if (inStock === true) {
+      variantConditions.push({
+        isAvailable: true,
+        inventory: {
+          availableQuantity: { gt: 0 },
+        },
+      });
+    }
+
+    if (variantConditions.length > 1) {
+      andConditions.push({
+        variants: {
+          some: {
+            AND: variantConditions,
+          },
+        },
+      });
+    }
+
+    if (outOfStock === true) {
+      andConditions.push({
+        OR: [
+          { variants: { none: { isAvailable: true, isDeleted: false, inventory: { availableQuantity: { gt: 0 } } } } },
+          { variants: { none: {} } },
+        ],
+      });
+    }
+
+    // Rating
+    if (rating !== undefined && rating > 0) {
+      andConditions.push({
+        rating: { gte: new Prisma.Decimal(rating) },
+      });
+    }
+
+    // Bestseller / Featured
+    if (isBestseller !== undefined) {
+      andConditions.push({ isBestseller });
+    }
+    if (isFeatured !== undefined) {
+      andConditions.push({ isFeatured });
+    }
+
+    // Price range
+    if (minPrice !== undefined || maxPrice !== undefined) {
+      andConditions.push({
+        sellingPrice: {
+          ...(minPrice !== undefined ? { gte: new Prisma.Decimal(minPrice) } : {}),
+          ...(maxPrice !== undefined ? { lte: new Prisma.Decimal(maxPrice) } : {}),
+        },
+      });
+    }
+
+    // Search term
+    if (searchTerm) {
+      andConditions.push({
+        OR: [
+          { name: { contains: searchTerm, mode: "insensitive" } },
+          { description: { contains: searchTerm, mode: "insensitive" } },
+          { sku: { contains: searchTerm, mode: "insensitive" } },
+          {
+            category: {
+              name: { contains: searchTerm, mode: "insensitive" },
             },
-          }
-        : {}),
-      ...(schoolList && schoolList.length > 0
-        ? {
+          },
+          {
+            brand: {
+              name: { contains: searchTerm, mode: "insensitive" },
+            },
+          },
+          {
             schoolUniforms: {
               some: {
                 school: {
-                  OR: [
-                    { slug: { in: schoolList } },
-                    ...schoolList.map((s) => ({ name: { contains: s, mode: "insensitive" as const } })),
-                  ],
-                },
-              },
-            },
-          }
-        : {}),
-      ...(genderList && genderList.length > 0
-        ? {
-            schoolUniforms: {
-              some: {
-                gender: { in: [...genderList, "UNISEX"] },
-              },
-            },
-          }
-        : {}),
-      ...(seasonList && seasonList.length > 0
-        ? {
-            schoolUniforms: {
-              some: {
-                season: { in: [...seasonList, "ALL_SEASON"] },
-              },
-            },
-          }
-        : {}),
-      ...(classList && classList.length > 0
-        ? {
-            schoolUniforms: {
-              some: {
-                OR: classList.map((c) => ({
-                  classGrade: { contains: c, mode: "insensitive" as const },
-                })),
-              },
-            },
-          }
-        : {}),
-      ...(sizeList && sizeList.length > 0
-        ? {
-            variants: {
-              some: {
-                size: { in: sizeList },
-                isDeleted: false,
-              },
-            },
-          }
-        : {}),
-      ...(colorList && colorList.length > 0
-        ? {
-            variants: {
-              some: {
-                OR: colorList.map((c) => ({
-                  color: { contains: c, mode: "insensitive" as const },
-                })),
-                isDeleted: false,
-              },
-            },
-          }
-        : {}),
-      ...(inStock === true
-        ? {
-            variants: {
-              some: {
-                isAvailable: true,
-                isDeleted: false,
-                inventory: {
-                  availableQuantity: { gt: 0 },
-                },
-              },
-            },
-          }
-        : {}),
-      ...(rating !== undefined
-        ? {
-            rating: { gte: new Prisma.Decimal(rating) },
-          }
-        : {}),
-      ...(isBestseller !== undefined ? { isBestseller } : {}),
-      ...(isFeatured !== undefined ? { isFeatured } : {}),
-      ...(minPrice !== undefined || maxPrice !== undefined
-        ? {
-            sellingPrice: {
-              ...(minPrice !== undefined ? { gte: new Prisma.Decimal(minPrice) } : {}),
-              ...(maxPrice !== undefined ? { lte: new Prisma.Decimal(maxPrice) } : {}),
-            },
-          }
-        : {}),
-      ...(searchTerm
-        ? {
-            OR: [
-              { name: { contains: searchTerm, mode: "insensitive" } },
-              { description: { contains: searchTerm, mode: "insensitive" } },
-              { sku: { contains: searchTerm, mode: "insensitive" } },
-              {
-                category: {
                   name: { contains: searchTerm, mode: "insensitive" },
                 },
               },
-              {
-                schoolUniforms: {
-                  some: {
-                    school: {
-                      name: { contains: searchTerm, mode: "insensitive" },
-                    },
-                  },
-                },
-              },
-            ],
-          }
-        : {}),
+            },
+          },
+        ],
+      });
+    }
+
+    const where: Prisma.ProductWhereInput = {
+      AND: andConditions,
     };
 
     let orderBy: Prisma.ProductOrderByWithRelationInput = { createdAt: "desc" };
@@ -211,11 +252,14 @@ export class ProductRepository extends BaseRepository {
       orderBy = { sellingPrice: "asc" };
     }
 
-    const [products, total] = await Promise.all([
-      this.db.product.findMany({
+    const hasDiscountFilter = hasDiscount === true || (discount !== undefined && discount > 0);
+
+    let products: any[];
+    let total: number;
+
+    if (hasDiscountFilter) {
+      const allMatching = await this.db.product.findMany({
         where,
-        skip,
-        take: limit,
         orderBy,
         include: {
           category: true,
@@ -236,33 +280,58 @@ export class ProductRepository extends BaseRepository {
             select: { rating: true },
           },
         },
-      }),
-      this.db.product.count({ where }),
-    ]);
+      });
 
-    // Apply in-memory filter for discount percentage or hasDiscount if requested
-    let filteredProducts = products;
-    if (hasDiscount === true) {
-      filteredProducts = filteredProducts.filter(
-        (p) => Number(p.mrp) > Number(p.sellingPrice)
-      );
-    }
-    if (discount && discount > 0) {
-      filteredProducts = filteredProducts.filter((p) => {
+      const filtered = allMatching.filter((p) => {
         const mrp = Number(p.mrp);
         const sell = Number(p.sellingPrice);
-        if (mrp <= 0) return false;
-        const discountPct = Math.round(((mrp - sell) / mrp) * 100);
-        return discountPct >= discount;
+        if (mrp <= sell) return false;
+        if (discount && discount > 0) {
+          const discountPct = Math.round(((mrp - sell) / mrp) * 100);
+          return discountPct >= discount;
+        }
+        return true;
       });
+
+      total = filtered.length;
+      products = filtered.slice(skip, skip + limit);
+    } else {
+      [products, total] = await Promise.all([
+        this.db.product.findMany({
+          where,
+          skip,
+          take: limit,
+          orderBy,
+          include: {
+            category: true,
+            subcategory: true,
+            brand: true,
+            images: { orderBy: { displayOrder: "asc" } },
+            variants: {
+              where: { isDeleted: false },
+              include: { inventory: true },
+            },
+            schoolUniforms: {
+              include: {
+                school: true,
+              },
+            },
+            reviews: {
+              where: { status: "APPROVED" },
+              select: { rating: true },
+            },
+          },
+        }),
+        this.db.product.count({ where }),
+      ]);
     }
 
     return {
-      products: filteredProducts,
-      total: discount || hasDiscount ? filteredProducts.length : total,
+      products,
+      total,
       page,
       limit,
-      totalPages: Math.ceil((discount || hasDiscount ? filteredProducts.length : total) / limit) || 1,
+      totalPages: Math.ceil(total / limit) || 1,
     };
   }
 
