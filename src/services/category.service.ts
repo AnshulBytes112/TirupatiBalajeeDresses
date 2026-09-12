@@ -61,6 +61,7 @@ export class CategoryService {
       description: cat.description,
       imageUrl: cat.imageUrl,
       displayOrder: cat.displayOrder,
+      isActive: cat.isActive,
       productsCount: cat._count.products + cat._count.subProducts,
       children: cat.children.map((child) => ({
         id: child.id,
@@ -68,6 +69,7 @@ export class CategoryService {
         slug: child.slug,
         description: child.description,
         imageUrl: child.imageUrl,
+        isActive: child.isActive,
         productsCount: child._count.products + child._count.subProducts,
       })),
     }));
@@ -84,6 +86,7 @@ export class CategoryService {
       parentId: cat.parentId,
       parentName: cat.parent?.name || null,
       displayOrder: cat.displayOrder,
+      isActive: cat.isActive,
       productsCount: cat._count.products + cat._count.subProducts,
     }));
   }

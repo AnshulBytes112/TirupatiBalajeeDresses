@@ -33,6 +33,7 @@ export default function AdminAuditLogsPage() {
   const [adminKey, setAdminKey] = React.useState<string>("");
   const [isAuthorized, setIsAuthorized] = React.useState<boolean>(false);
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
+  const [isCheckingAuth, setIsCheckingAuth] = React.useState<boolean>(true);
   const [logs, setLogs] = React.useState<any[]>([]);
   const [search, setSearch] = React.useState<string>("");
   const [moduleFilter, setModuleFilter] = React.useState<string>("ALL");
@@ -45,6 +46,8 @@ export default function AdminAuditLogsPage() {
     if (saved) {
       setAdminKey(saved);
       fetchLogs(saved);
+    } else {
+      setIsCheckingAuth(false);
     }
   }, []);
 
@@ -76,6 +79,7 @@ export default function AdminAuditLogsPage() {
       toast.error("Failed to connect to Audit Logs API");
     } finally {
       setIsLoading(false);
+      setIsCheckingAuth(false);
     }
   }
 
@@ -116,6 +120,14 @@ export default function AdminAuditLogsPage() {
   };
 
   // Auth Gate
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 bg-[#FAF7F2]">
+        <Loader2 className="h-8 w-8 animate-spin text-[#1C1917]" />
+      </div>
+    );
+  }
+
   if (!isAuthorized) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-[#FAF7F2]">
@@ -141,13 +153,18 @@ export default function AdminAuditLogsPage() {
                 placeholder="Enter Super-Admin Key..."
                 value={adminKey}
                 onChange={(e) => setAdminKey(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && fetchLogs(adminKey)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    setIsCheckingAuth(true);
+                    fetchLogs(adminKey);
+                  }
+                }}
                 className="w-full rounded-2xl border border-[#E5DCD3] bg-[#FAF7F2] pl-10 pr-4 py-3 text-sm text-[#1C1917] font-medium focus:border-[#1C1917] focus:bg-white focus:outline-none"
               />
             </div>
 
             <button
-              onClick={() => fetchLogs(adminKey)}
+              onClick={() => { setIsCheckingAuth(true); fetchLogs(adminKey); }}
               disabled={isLoading}
               className="w-full rounded-2xl bg-[#1C1917] py-3 text-sm font-black text-white hover:bg-stone-800 transition-colors flex items-center justify-center gap-2 shadow-sm disabled:opacity-50"
             >

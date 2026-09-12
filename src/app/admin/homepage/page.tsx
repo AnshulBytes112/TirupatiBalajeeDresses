@@ -77,6 +77,7 @@ export default function AdminHomepageCMS() {
     "desktop"
   );
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
+  const [isCheckingAuth, setIsCheckingAuth] = React.useState<boolean>(true);
   const [isSaving, setIsSaving] = React.useState<boolean>(false);
 
   // Dynamic Data State
@@ -100,6 +101,8 @@ export default function AdminHomepageCMS() {
     if (saved) {
       setAdminKey(saved);
       verifyAndLoad(saved);
+    } else {
+      setIsCheckingAuth(false);
     }
   }, []);
 
@@ -107,6 +110,7 @@ export default function AdminHomepageCMS() {
     const key = keyToTest || adminKey;
     if (!key) {
       toast.error("Please enter the Super-Admin secret key");
+      setIsCheckingAuth(false);
       return;
     }
 
@@ -137,6 +141,7 @@ export default function AdminHomepageCMS() {
       toast.error("Error connecting to Super-Admin CMS API");
     } finally {
       setIsLoading(false);
+      setIsCheckingAuth(false);
     }
   }
 
@@ -368,6 +373,14 @@ export default function AdminHomepageCMS() {
   };
 
   // Auth Gate
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 bg-[#FAF7F2]">
+        <Loader2 className="h-8 w-8 animate-spin text-[#1C1917]" />
+      </div>
+    );
+  }
+
   if (!isAuthorized) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-[#FAF7F2]">
@@ -393,13 +406,18 @@ export default function AdminHomepageCMS() {
                 placeholder="Enter Super-Admin Key..."
                 value={adminKey}
                 onChange={(e) => setAdminKey(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && verifyAndLoad()}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    setIsCheckingAuth(true);
+                    verifyAndLoad();
+                  }
+                }}
                 className="w-full rounded-2xl border border-[#E5DCD3] bg-[#FAF7F2] pl-10 pr-4 py-3 text-sm text-[#1C1917] font-medium focus:border-[#1C1917] focus:bg-white focus:outline-none"
               />
             </div>
 
             <button
-              onClick={() => verifyAndLoad()}
+              onClick={() => { setIsCheckingAuth(true); verifyAndLoad(); }}
               disabled={isLoading}
               className="w-full rounded-2xl bg-[#1C1917] py-3 text-sm font-black text-white hover:bg-stone-800 transition-colors flex items-center justify-center gap-2 shadow-sm disabled:opacity-50"
             >

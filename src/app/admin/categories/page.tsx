@@ -57,6 +57,7 @@ export default function AdminCategoriesPage() {
   const [adminKey, setAdminKey] = React.useState<string>("");
   const [isAuthorized, setIsAuthorized] = React.useState<boolean>(false);
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
+  const [isCheckingAuth, setIsCheckingAuth] = React.useState<boolean>(true);
   const [categories, setCategories] = React.useState<CategoryItem[]>([]);
   const [searchQuery, setSearchQuery] = React.useState<string>("");
   const [isBulkImportOpen, setIsBulkImportOpen] = React.useState<boolean>(false);
@@ -92,6 +93,8 @@ export default function AdminCategoriesPage() {
     if (saved) {
       setAdminKey(saved);
       fetchCategories(saved);
+    } else {
+      setIsCheckingAuth(false);
     }
   }, []);
 
@@ -120,6 +123,7 @@ export default function AdminCategoriesPage() {
       toast.error("Failed to load categories.");
     } finally {
       setIsLoading(false);
+      setIsCheckingAuth(false);
     }
   }
 
@@ -253,6 +257,14 @@ export default function AdminCategoriesPage() {
   );
 
   // Auth Gate
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 bg-[#FAF7F2]">
+        <Loader2 className="h-8 w-8 animate-spin text-[#1C1917]" />
+      </div>
+    );
+  }
+
   if (!isAuthorized) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-[#FAF7F2]">
@@ -271,6 +283,7 @@ export default function AdminCategoriesPage() {
           <form
             onSubmit={(e) => {
               e.preventDefault();
+              setIsCheckingAuth(true);
               fetchCategories(adminKey);
             }}
             className="space-y-4 pt-2"
@@ -438,8 +451,12 @@ export default function AdminCategoriesPage() {
                   {/* Root Category Row */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="flex items-start sm:items-center gap-3">
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-navy-950 text-white font-black text-xs shadow-2xs">
-                        {index + 1}
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-navy-950 text-white font-black text-xs shadow-2xs overflow-hidden">
+                        {cat.imageUrl ? (
+                          <img src={cat.imageUrl} alt={cat.name} className="h-full w-full object-cover" />
+                        ) : (
+                          index + 1
+                        )}
                       </div>
 
                       <div>

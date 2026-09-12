@@ -43,6 +43,7 @@ export default function SuperAdminDeepAnalyticsDashboard() {
   const [adminKey, setAdminKey] = React.useState<string>("");
   const [isAuthorized, setIsAuthorized] = React.useState<boolean>(false);
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
+  const [isCheckingAuth, setIsCheckingAuth] = React.useState<boolean>(true);
   const [timeframe, setTimeframe] = React.useState<"7d" | "30d" | "season" | "year">("30d");
   const [analyticsData, setAnalyticsData] = React.useState<any>(null);
 
@@ -52,6 +53,8 @@ export default function SuperAdminDeepAnalyticsDashboard() {
     if (saved) {
       setAdminKey(saved);
       fetchAnalytics(saved, timeframe);
+    } else {
+      setIsCheckingAuth(false);
     }
   }, [timeframe]);
 
@@ -79,6 +82,7 @@ export default function SuperAdminDeepAnalyticsDashboard() {
       toast.error("Failed to connect to Analytics API");
     } finally {
       setIsLoading(false);
+      setIsCheckingAuth(false);
     }
   }
 
@@ -91,6 +95,14 @@ export default function SuperAdminDeepAnalyticsDashboard() {
   };
 
   // Auth Gate
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 bg-[#FAF7F2]">
+        <Loader2 className="h-8 w-8 animate-spin text-[#1C1917]" />
+      </div>
+    );
+  }
+
   if (!isAuthorized) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-[#FAF7F2]">
@@ -122,7 +134,7 @@ export default function SuperAdminDeepAnalyticsDashboard() {
             </div>
 
             <button
-              onClick={() => fetchAnalytics(adminKey)}
+              onClick={() => { setIsCheckingAuth(true); fetchAnalytics(adminKey); }}
               disabled={isLoading}
               className="w-full rounded-2xl bg-[#1C1917] py-3 text-sm font-black text-white hover:bg-stone-800 transition-colors flex items-center justify-center gap-2 shadow-sm disabled:opacity-50"
             >

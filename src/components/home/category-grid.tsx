@@ -22,130 +22,14 @@ interface CategoryCardItem {
   hoverBorderColor?: string;
 }
 
-const CATEGORY_CARDS: CategoryCardItem[] = [
-  {
-    id: "summer-dress",
-    name: "Summer Dress",
-    href: "/shop/school-uniforms/summer-dress",
-    badgeEmoji: "☀️",
-    subtitleLine1: "Light. Breathable.",
-    subtitleLine2: "All-Day Comfort.",
-    imageSrc: "/images/shirt.jpg",
-    borderColor: "border-amber-200/80",
-    hoverBorderColor: "hover:border-amber-400",
-  },
-  {
-    id: "winter-dress",
-    name: "Winter Dress",
-    href: "/shop/school-uniforms/winter-dress",
-    badgeEmoji: "❄️",
-    subtitleLine1: "Warm. Cozy.",
-    subtitleLine2: "Same Great Quality.",
-    imageSrc: "/images/winter-flatlay.jpg",
-    borderColor: "border-sky-200/80",
-    hoverBorderColor: "hover:border-sky-400",
-  },
-  {
-    id: "school-shoes",
-    name: "School Shoes",
-    href: "/shop/school-shoes",
-    badgeEmoji: "👟",
-    subtitleLine1: "Durable. Anti-Skid.",
-    subtitleLine2: "Daily Uniform Fit.",
-    imageSrc: "/images/shoes.jpg",
-    borderColor: "border-slate-200/80",
-    hoverBorderColor: "hover:border-slate-400",
-  },
-  {
-    id: "school-bags",
-    name: "School Bags",
-    href: "/shop/school-bags",
-    badgeEmoji: "🎒",
-    subtitleLine1: "Spacious. Sturdy.",
-    subtitleLine2: "Ergonomic Straps.",
-    imageSrc: "/images/backpack.jpg",
-    borderColor: "border-indigo-200/80",
-    hoverBorderColor: "hover:border-indigo-400",
-  },
-  {
-    id: "socks-stockings",
-    name: "Socks & Stockings",
-    href: "/shop/school-items/socks-stockings",
-    badgeEmoji: "🧦",
-    subtitleLine1: "Soft Combed Cotton.",
-    subtitleLine2: "Snug Everyday Fit.",
-    imageSrc: "/images/socks.jpg",
-    borderColor: "border-slate-200/80",
-    hoverBorderColor: "hover:border-slate-400",
-  },
-  {
-    id: "belts-accessories",
-    name: "Belts & Accessories",
-    href: "/shop/school-items/belts-accessories",
-    badgeEmoji: "👔",
-    subtitleLine1: "Smart Finish.",
-    subtitleLine2: "Official Uniform Fit.",
-    imageSrc: "/images/belt.jpg",
-    borderColor: "border-slate-200/80",
-    hoverBorderColor: "hover:border-slate-400",
-  },
-  {
-    id: "stationery",
-    name: "Stationery",
-    href: "/shop/school-items/stationery",
-    badgeEmoji: "✏️",
-    subtitleLine1: "Essential Supplies.",
-    subtitleLine2: "Classroom Ready.",
-    imageSrc: "/images/stationery.jpg",
-    borderColor: "border-amber-200/80",
-    hoverBorderColor: "hover:border-amber-400",
-  },
-  {
-    id: "water-bottles",
-    name: "Water Bottles",
-    href: "/shop/school-items/water-bottles",
-    badgeEmoji: "💧",
-    subtitleLine1: "BPA-Free & Safe.",
-    subtitleLine2: "Leak-Proof Daily.",
-    svgIcon: (
-      <svg viewBox="0 0 64 64" className="h-10 w-10 sm:h-11 sm:w-11 drop-shadow-xs" fill="none">
-        <rect x="23" y="16" width="18" height="40" rx="6" fill="#1D4ED8" />
-        <rect x="26" y="8" width="12" height="9" rx="3" fill="#1E40AF" />
-        <path d="M28 8 C28 4 36 4 36 8" stroke="#0F172A" strokeWidth="2.5" strokeLinecap="round" fill="none" />
-        <rect x="25" y="24" width="14" height="2" rx="1" fill="#60A5FA" />
-        <path d="M29 32 L35 32" stroke="#93C5FD" strokeWidth="2" strokeLinecap="round" />
-      </svg>
-    ),
-    borderColor: "border-blue-200/80",
-    hoverBorderColor: "hover:border-blue-400",
-  },
-  {
-    id: "lunch-boxes",
-    name: "Lunch Boxes",
-    href: "/shop/school-items/lunch-boxes",
-    badgeEmoji: "🍱",
-    subtitleLine1: "Food Grade Steel.",
-    subtitleLine2: "Fresh & Organized.",
-    svgIcon: (
-      <svg viewBox="0 0 64 64" className="h-10 w-10 sm:h-11 sm:w-11 drop-shadow-xs" fill="none">
-        <rect x="12" y="22" width="40" height="26" rx="6" fill="#1E40AF" />
-        <rect x="10" y="18" width="44" height="8" rx="3" fill="#3B82F6" />
-        <rect x="25" y="20" width="14" height="4" rx="1.5" fill="#FBBF24" />
-        <rect x="20" y="28" width="24" height="14" rx="2" fill="#2563EB" />
-      </svg>
-    ),
-    borderColor: "border-emerald-200/80",
-    hoverBorderColor: "hover:border-emerald-400",
-  },
-];
-
 interface CategoryGridProps {
   cards?: CategoryCardItem[];
   className?: string;
 }
 
 export function CategoryGrid({ cards, className }: CategoryGridProps) {
-  const activeCards = cards && cards.length > 0 ? cards : CATEGORY_CARDS;
+  if (!cards || cards.length === 0) return null;
+  const activeCards = cards;
   const previewDevice = usePreviewDevice();
 
   const gridClass =
@@ -174,7 +58,7 @@ export function CategoryGrid({ cards, className }: CategoryGridProps) {
 
         {/* Unified Category Cards Grid: Applied across all items */}
         <div className={cn("grid items-stretch", gridClass)}>
-          {activeCards.map((cat) => (
+          {activeCards.map((cat, index) => (
             <Link
               key={cat.id}
               href={cat.href}
@@ -195,8 +79,9 @@ export function CategoryGrid({ cards, className }: CategoryGridProps) {
                       src={cat.imageSrc}
                       alt={cat.name}
                       fill
-                      className="object-contain p-1 group-hover:scale-105 transition-transform"
+                      className="object-contain p-1 group-hover:scale-105 transition-transform mix-blend-multiply"
                       sizes="(max-width: 640px) 45vw, (max-width: 1024px) 20vw, 120px"
+                      priority={index < 5}
                     />
                   ) : (
                     cat.svgIcon

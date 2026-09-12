@@ -45,6 +45,7 @@ export default function AdminUsersRBACPage() {
   const [adminKey, setAdminKey] = React.useState<string>("");
   const [isAuthorized, setIsAuthorized] = React.useState<boolean>(false);
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
+  const [isCheckingAuth, setIsCheckingAuth] = React.useState<boolean>(true);
   const [users, setUsers] = React.useState<any[]>([]);
   const [search, setSearch] = React.useState<string>("");
   const [roleFilter, setRoleFilter] = React.useState<string>("ALL");
@@ -80,6 +81,8 @@ export default function AdminUsersRBACPage() {
     if (saved) {
       setAdminKey(saved);
       fetchUsers(saved);
+    } else {
+      setIsCheckingAuth(false);
     }
   }, []);
 
@@ -111,6 +114,7 @@ export default function AdminUsersRBACPage() {
       toast.error("Failed to connect to Users API");
     } finally {
       setIsLoading(false);
+      setIsCheckingAuth(false);
     }
   }
 
@@ -255,6 +259,14 @@ export default function AdminUsersRBACPage() {
   };
 
   // Auth Gate
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 bg-[#FAF7F2]">
+        <Loader2 className="h-8 w-8 animate-spin text-[#1C1917]" />
+      </div>
+    );
+  }
+
   if (!isAuthorized) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-[#FAF7F2]">
@@ -280,13 +292,18 @@ export default function AdminUsersRBACPage() {
                 placeholder="Enter Super-Admin Key..."
                 value={adminKey}
                 onChange={(e) => setAdminKey(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && fetchUsers(adminKey)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    setIsCheckingAuth(true);
+                    fetchUsers(adminKey);
+                  }
+                }}
                 className="w-full rounded-2xl border border-[#E5DCD3] bg-[#FAF7F2] pl-10 pr-4 py-3 text-sm text-[#1C1917] font-medium focus:border-[#1C1917] focus:bg-white focus:outline-none"
               />
             </div>
 
             <button
-              onClick={() => fetchUsers(adminKey)}
+              onClick={() => { setIsCheckingAuth(true); fetchUsers(adminKey); }}
               disabled={isLoading}
               className="w-full rounded-2xl bg-[#1C1917] py-3 text-sm font-black text-white hover:bg-stone-800 transition-colors flex items-center justify-center gap-2 shadow-sm disabled:opacity-50"
             >
