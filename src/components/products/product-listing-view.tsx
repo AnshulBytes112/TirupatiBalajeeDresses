@@ -66,7 +66,31 @@ export function ProductListingView({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  // State initialized from URL query parameters
+  // State initialized from URL query parameters & props
+  const [filters, setFilters] = React.useState<FilterState>(() => ({
+    school: searchParams.get("school") || preFilters.school,
+    season: searchParams.get("season") || preFilters.season,
+    gender: searchParams.get("gender") || preFilters.gender,
+    classGrade: searchParams.get("classGrade") || searchParams.get("class") || preFilters.classGrade,
+    category: searchParams.get("category") || preFilters.category,
+    size: searchParams.get("size") || preFilters.size,
+    color: searchParams.get("color") || preFilters.color,
+    brand: searchParams.get("brand") || preFilters.brand,
+    minPrice: searchParams.get("minPrice") ? Number(searchParams.get("minPrice")) : preFilters.minPrice,
+    maxPrice: searchParams.get("maxPrice") ? Number(searchParams.get("maxPrice")) : preFilters.maxPrice,
+    discount: searchParams.get("discount") ? Number(searchParams.get("discount")) : preFilters.discount,
+    rating: searchParams.get("rating") ? Number(searchParams.get("rating")) : preFilters.rating,
+    inStock: searchParams.get("inStock") === "true" || preFilters.inStock,
+    outOfStock: searchParams.get("outOfStock") === "true" || preFilters.outOfStock,
+  }));
+
+  const [currentSort, setCurrentSort] = React.useState<string>(
+    () => searchParams.get("sort") || "popular"
+  );
+  const [currentPage, setCurrentPage] = React.useState<number>(
+    () => Number(searchParams.get("page") || "1")
+  );
+
   const [products, setProducts] = React.useState<PLPProductItem[]>(initialProducts);
   const [pagination, setPagination] = React.useState<PaginationInfo>(
     initialPagination || { total: 0, page: 1, limit: 12, totalPages: 1 }
@@ -75,57 +99,112 @@ export function ProductListingView({
   const [isLoadingMore, setIsLoadingMore] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
-  // Extract filter state from searchParams
-  const currentFilters: FilterState = React.useMemo(() => {
-    const params = Object.fromEntries(searchParams.entries());
-    return {
-      school: params.school || preFilters.school,
-      season: params.season || preFilters.season,
-      gender: params.gender || preFilters.gender,
-      classGrade: params.classGrade || params.class || preFilters.classGrade,
-      category: params.category || preFilters.category,
-      size: params.size || preFilters.size,
-      color: params.color || preFilters.color,
-      brand: params.brand || preFilters.brand,
-      minPrice: params.minPrice ? Number(params.minPrice) : preFilters.minPrice,
-      maxPrice: params.maxPrice ? Number(params.maxPrice) : preFilters.maxPrice,
-      discount: params.discount ? Number(params.discount) : preFilters.discount,
-      rating: params.rating ? Number(params.rating) : preFilters.rating,
-      inStock: params.inStock === "true" || preFilters.inStock,
-      outOfStock: params.outOfStock === "true" || preFilters.outOfStock,
-    };
-  }, [searchParams, preFilters]);
+  const abortControllerRef = React.useRef<AbortController | null>(null);
+  const preFiltersRef = React.useRef(preFilters);
+  preFiltersRef.current = preFilters;
 
-  const currentSort = searchParams.get("sort") || "popular";
-  const currentPage = Number(searchParams.get("page") || "1");
+  // Build query string helper without triggering Next.js router.push roundtrips
+  const syncURL = React.useCallback(
+    (newFilters: FilterState, sort: string, page: number) => {
+      const params = new URLSearchParams();
+      const q = searchParams.get("q") || searchParams.get("search");
+      if (q) params.set("q", q);
 
-  // Fetch updated products whenever searchParams change
-  const fetchProducts = React.useCallback(
-    async (paramsString: string, append = false) => {
+      Object.entries(newFilters).forEach(([key, val]) => {
+        if (val !== undefined && val !== "" && val !== false) {
+          if (preFiltersRef.current[key as keyof FilterState] === val) return;
+          params.set(key, String(val));
+        }
+      });
+
+      if (sort && sort !== "popular") {
+        params.set("sort", sort);
+      }
+
+      if (page > 1) {
+        params.set("page", String(page));
+      }
+
+      const queryStr = params.toString();
+      const newUrl = queryStr ? `${pathname}?${queryStr}` : pathname;
+      window.history.replaceState(null, "", newUrl);
+    },
+    [pathname, searchParams]
+  );
+
+  // Fetch updated products with AbortController for zero lag
+  const executeFilterFetch = React.useCallback(
+    async (
+      activeFilters: FilterState,
+      activeSort: string,
+      activePage: number,
+      append = false
+    ) => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+
       if (append) {
         setIsLoadingMore(true);
       } else {
         setIsLoading(true);
       }
       setError(null);
+
       try {
-        const url = `/api/products?${paramsString}`;
-        const res = await fetch(url);
+        const params = new URLSearchParams();
+        const q = searchParams.get("q") || searchParams.get("search");
+        if (q) params.set("q", q);
+
+        // Include pre-filters
+        Object.entries(preFiltersRef.current).forEach(([k, v]) => {
+          if (v !== undefined && v !== "" && v !== false) {
+            params.set(k, String(v));
+          }
+        });
+
+        // Include active filters
+        Object.entries(activeFilters).forEach(([k, v]) => {
+          if (valIsActive(v)) {
+            params.set(k, String(v));
+          }
+        });
+
+        if (activeSort && activeSort !== "popular") {
+          params.set("sort", activeSort);
+        }
+
+        if (activePage > 1) {
+          params.set("page", String(activePage));
+        }
+
+        const url = `/api/products?${params.toString()}`;
+        const res = await fetch(url, { signal: controller.signal });
         const data = await res.json().catch(() => null);
+
         if (!res.ok || !data?.success) {
           throw new Error(
-            data?.error?.message || data?.message || `Failed to fetch products (${res.status}: ${res.statusText})`
+            data?.error?.message ||
+              data?.message ||
+              `Failed to fetch products (${res.status}: ${res.statusText})`
           );
         }
+
         if (append) {
           setProducts((prev) => [...prev, ...data.data]);
         } else {
           setProducts(data.data);
         }
+
         if (data.meta?.pagination) {
           setPagination(data.meta.pagination);
         }
       } catch (err: any) {
+        if (err.name === "AbortError") {
+          return; // Request was aborted due to newer filter action
+        }
         console.error("PLP Fetch error:", err);
         setError(err.message || "Something went wrong while fetching products.");
       } finally {
@@ -133,15 +212,12 @@ export function ProductListingView({
         setIsLoadingMore(false);
       }
     },
-    []
+    [searchParams]
   );
 
-  const preFiltersRef = React.useRef(preFilters);
-  preFiltersRef.current = preFilters;
-
-  // Track previous search params string to prevent duplicate fetches & infinite loops
-  const prevParamsStringRef = React.useRef(searchParams.toString());
-  const isInitialMount = React.useRef(true);
+  function valIsActive(v: any) {
+    return v !== undefined && v !== "" && v !== false && v !== null;
+  }
 
   // Synchronize state when server component passes fresh initialProducts
   React.useEffect(() => {
@@ -151,130 +227,92 @@ export function ProductListingView({
     setError(null);
   }, [initialProducts, initialPagination]);
 
-  // Sync with client-side URL filter/sort/page changes
-  React.useEffect(() => {
-    const currentParamsString = searchParams.toString();
-
-    // Skip on initial mount since server component already fetched initial data
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      prevParamsStringRef.current = currentParamsString;
-      return;
-    }
-
-    // Only fetch if URL query parameters have genuinely changed
-    if (prevParamsStringRef.current === currentParamsString) {
-      return;
-    }
-
-    prevParamsStringRef.current = currentParamsString;
-
-    const params = new URLSearchParams(currentParamsString);
-    // Attach pre-filters if not present in URL
-    Object.entries(preFiltersRef.current).forEach(([k, v]) => {
-      if (v !== undefined && !params.has(k)) {
-        params.set(k, String(v));
-      }
-    });
-
-    fetchProducts(params.toString());
-  }, [searchParams, fetchProducts]);
-
-  // Update URL helper
-  const updateURL = (newFilters: FilterState, sort?: string, page?: number) => {
-    const params = new URLSearchParams();
-
-    // Preserve search query if present
-    const q = searchParams.get("q") || searchParams.get("search");
-    if (q) params.set("q", q);
-
-    // Apply filters
-    Object.entries(newFilters).forEach(([key, val]) => {
-      if (val !== undefined && val !== "" && val !== false) {
-        // Skip setting URL param if it's identical to the base page's fixed preFilter
-        if (preFilters[key as keyof FilterState] === val) return;
-        params.set(key, String(val));
-      }
-    });
-
-    const activeSort = sort !== undefined ? sort : currentSort;
-    if (activeSort && activeSort !== "popular") {
-      params.set("sort", activeSort);
-    }
-
-    const activePage = page !== undefined ? page : 1;
-    if (activePage > 1) {
-      params.set("page", String(activePage));
-    }
-
-    const queryStr = params.toString();
-    const newUrl = queryStr ? `${pathname}?${queryStr}` : pathname;
-    router.push(newUrl, { scroll: false });
-  };
-
   const handleFilterChange = (newFilters: FilterState) => {
-    updateURL(newFilters, currentSort, 1);
+    setFilters(newFilters);
+    setCurrentPage(1);
+    syncURL(newFilters, currentSort, 1);
+    executeFilterFetch(newFilters, currentSort, 1, false);
   };
 
   const handleSortChange = (newSort: string) => {
-    updateURL(currentFilters, newSort, 1);
+    setCurrentSort(newSort);
+    setCurrentPage(1);
+    syncURL(filters, newSort, 1);
+    executeFilterFetch(filters, newSort, 1, false);
   };
 
   const handlePageChange = (newPage: number) => {
-    updateURL(currentFilters, currentSort, newPage);
-    // Scroll to top of catalog smoothly
+    setCurrentPage(newPage);
+    syncURL(filters, currentSort, newPage);
+    executeFilterFetch(filters, currentSort, newPage, false);
     window.scrollTo({ top: 180, behavior: "smooth" });
   };
 
   const handleLoadMoreMobile = () => {
     if (pagination.page < pagination.totalPages) {
       const nextPage = pagination.page + 1;
-      const params = new URLSearchParams(searchParams.toString());
-      Object.entries(preFilters).forEach(([k, v]) => {
-        if (v !== undefined && !params.has(k)) {
-          params.set(k, String(v));
-        }
-      });
-      params.set("page", String(nextPage));
-      fetchProducts(params.toString(), true);
+      setCurrentPage(nextPage);
+      executeFilterFetch(filters, currentSort, nextPage, true);
     }
   };
 
   const handleClearAll = () => {
-    const params = new URLSearchParams();
-    const q = searchParams.get("q") || searchParams.get("search");
-    if (q) params.set("q", q);
-    const newUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
-    router.push(newUrl, { scroll: false });
+    const clearedFilters: FilterState = {
+      school: preFilters.school,
+      season: preFilters.season,
+      gender: preFilters.gender,
+      classGrade: preFilters.classGrade,
+      category: preFilters.category,
+      size: preFilters.size,
+      color: preFilters.color,
+      brand: preFilters.brand,
+      minPrice: preFilters.minPrice,
+      maxPrice: preFilters.maxPrice,
+      discount: preFilters.discount,
+      rating: preFilters.rating,
+      inStock: preFilters.inStock,
+      outOfStock: preFilters.outOfStock,
+    };
+    setFilters(clearedFilters);
+    setCurrentPage(1);
+    syncURL(clearedFilters, currentSort, 1);
+    executeFilterFetch(clearedFilters, currentSort, 1, false);
   };
 
   const handleRemoveSingleFilter = (key: string, value: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-    const currentParamVal = params.get(key);
+    const nextFilters: FilterState = { ...filters };
 
     if (key === "minPrice" || key === "maxPrice") {
-      params.delete("minPrice");
-      params.delete("maxPrice");
-    } else if (key === "inStock" || key === "outOfStock" || key === "discount" || key === "rating") {
-      params.delete(key);
-    } else if (currentParamVal) {
-      const items = currentParamVal.split(",").map((s) => s.trim()).filter(Boolean);
-      const filtered = items.filter(
-        (s) => s.toLowerCase() !== value.toLowerCase()
-      );
-      if (filtered.length > 0) {
-        params.set(key, filtered.join(","));
-      } else {
-        params.delete(key);
-      }
+      delete nextFilters.minPrice;
+      delete nextFilters.maxPrice;
+    } else if (
+      key === "inStock" ||
+      key === "outOfStock" ||
+      key === "discount" ||
+      key === "rating"
+    ) {
+      delete (nextFilters as any)[key];
     } else {
-      params.delete(key);
+      const currentParamVal = (nextFilters as any)[key] as string | undefined;
+      if (currentParamVal) {
+        const items = currentParamVal.split(",").map((s) => s.trim()).filter(Boolean);
+        const filtered = items.filter(
+          (s) => s.toLowerCase() !== value.toLowerCase()
+        );
+        if (filtered.length > 0) {
+          (nextFilters as any)[key] = filtered.join(",");
+        } else {
+          delete (nextFilters as any)[key];
+        }
+      } else {
+        delete (nextFilters as any)[key];
+      }
     }
 
-    params.delete("page");
-    const queryStr = params.toString();
-    const newUrl = queryStr ? `${pathname}?${queryStr}` : pathname;
-    router.push(newUrl, { scroll: false });
+    setFilters(nextFilters);
+    setCurrentPage(1);
+    syncURL(nextFilters, currentSort, 1);
+    executeFilterFetch(nextFilters, currentSort, 1, false);
   };
 
   // Build active filters list for pill tags
@@ -282,8 +320,8 @@ export function ProductListingView({
     const list: ActiveFilter[] = [];
 
     // School multi-select
-    if (currentFilters.school && currentFilters.school !== preFilters.school) {
-      currentFilters.school.split(",").forEach((slug) => {
+    if (filters.school && filters.school !== preFilters.school) {
+      filters.school.split(",").forEach((slug) => {
         const cleanSlug = slug.trim();
         const sName =
           filterOptions.schools.find((s) => s.slug === cleanSlug)?.name || cleanSlug;
@@ -292,8 +330,8 @@ export function ProductListingView({
     }
 
     // Brand multi-select
-    if (currentFilters.brand && currentFilters.brand !== preFilters.brand) {
-      currentFilters.brand.split(",").forEach((slug) => {
+    if (filters.brand && filters.brand !== preFilters.brand) {
+      filters.brand.split(",").forEach((slug) => {
         const cleanSlug = slug.trim();
         const bName =
           filterOptions.brands.find((b) => b.slug === cleanSlug)?.name || cleanSlug;
@@ -302,8 +340,8 @@ export function ProductListingView({
     }
 
     // Season multi-select
-    if (currentFilters.season && currentFilters.season !== preFilters.season) {
-      currentFilters.season.split(",").forEach((s) => {
+    if (filters.season && filters.season !== preFilters.season) {
+      filters.season.split(",").forEach((s) => {
         const clean = s.trim();
         list.push({
           key: "season",
@@ -315,24 +353,24 @@ export function ProductListingView({
     }
 
     // Gender multi-select
-    if (currentFilters.gender && currentFilters.gender !== preFilters.gender) {
-      currentFilters.gender.split(",").forEach((g) => {
+    if (filters.gender && filters.gender !== preFilters.gender) {
+      filters.gender.split(",").forEach((g) => {
         const clean = g.trim();
         list.push({ key: "gender", label: "Gender", value: clean, rawSlug: clean });
       });
     }
 
     // Class multi-select
-    if (currentFilters.classGrade && currentFilters.classGrade !== preFilters.classGrade) {
-      currentFilters.classGrade.split(",").forEach((c) => {
+    if (filters.classGrade && filters.classGrade !== preFilters.classGrade) {
+      filters.classGrade.split(",").forEach((c) => {
         const clean = c.trim();
         list.push({ key: "classGrade", label: "Grade", value: clean, rawSlug: clean });
       });
     }
 
     // Category multi-select
-    if (currentFilters.category && currentFilters.category !== "school-uniforms" && currentFilters.category !== preFilters.category) {
-      currentFilters.category.split(",").forEach((catSlug) => {
+    if (filters.category && filters.category !== "school-uniforms" && filters.category !== preFilters.category) {
+      filters.category.split(",").forEach((catSlug) => {
         const cleanSlug = catSlug.trim();
         const cName =
           filterOptions.categories.find((c) => c.slug === cleanSlug)?.name || cleanSlug;
@@ -341,50 +379,50 @@ export function ProductListingView({
     }
 
     // Size multi-select
-    if (currentFilters.size && currentFilters.size !== preFilters.size) {
-      currentFilters.size.split(",").forEach((sz) => {
+    if (filters.size && filters.size !== preFilters.size) {
+      filters.size.split(",").forEach((sz) => {
         const clean = sz.trim();
         list.push({ key: "size", label: "Size", value: clean, rawSlug: clean });
       });
     }
 
     // Color multi-select
-    if (currentFilters.color && currentFilters.color !== preFilters.color) {
-      currentFilters.color.split(",").forEach((col) => {
+    if (filters.color && filters.color !== preFilters.color) {
+      filters.color.split(",").forEach((col) => {
         const clean = col.trim();
         list.push({ key: "color", label: "Color", value: clean, rawSlug: clean });
       });
     }
 
     // Price
-    if (currentFilters.minPrice || currentFilters.maxPrice) {
-      const min = currentFilters.minPrice ? `₹${currentFilters.minPrice}` : "₹0";
-      const max = currentFilters.maxPrice ? `₹${currentFilters.maxPrice}` : "above";
+    if (filters.minPrice || filters.maxPrice) {
+      const min = filters.minPrice ? `₹${filters.minPrice}` : "₹0";
+      const max = filters.maxPrice ? `₹${filters.maxPrice}` : "above";
       list.push({ key: "minPrice", label: "Price", value: `${min} - ${max}`, rawSlug: "price" });
     }
 
     // Discount
-    if (currentFilters.discount) {
-      list.push({ key: "discount", label: "Discount", value: `${currentFilters.discount}%+`, rawSlug: String(currentFilters.discount) });
+    if (filters.discount) {
+      list.push({ key: "discount", label: "Discount", value: `${filters.discount}%+`, rawSlug: String(filters.discount) });
     }
 
     // Rating
-    if (currentFilters.rating) {
-      list.push({ key: "rating", label: "Rating", value: `${currentFilters.rating}★+`, rawSlug: String(currentFilters.rating) });
+    if (filters.rating) {
+      list.push({ key: "rating", label: "Rating", value: `${filters.rating}★+`, rawSlug: String(filters.rating) });
     }
 
     // In Stock
-    if (currentFilters.inStock) {
+    if (filters.inStock) {
       list.push({ key: "inStock", label: "Availability", value: "In Stock", rawSlug: "inStock" });
     }
 
     // Out of Stock
-    if (currentFilters.outOfStock) {
+    if (filters.outOfStock) {
       list.push({ key: "outOfStock", label: "Availability", value: "Out of Stock", rawSlug: "outOfStock" });
     }
 
     return list;
-  }, [currentFilters, preFilters, filterOptions]);
+  }, [filters, preFilters, filterOptions]);
 
   return (
     <div className="min-h-screen bg-brand-cream-50/30 pb-28 sm:pb-20 pt-2 sm:pt-4">
@@ -410,7 +448,7 @@ export function ProductListingView({
 
         {/* Mobile Filter & Sort Sticky Top Bar + Drawer */}
         <MobileFilterDrawer
-          filters={currentFilters}
+          filters={filters}
           options={filterOptions}
           totalProducts={pagination.total}
           currentSort={currentSort}
@@ -430,7 +468,7 @@ export function ProductListingView({
         <div className="flex gap-8 items-start">
           {/* Desktop Filter Sidebar (Hidden on Mobile) */}
           <FilterSidebar
-            filters={currentFilters}
+            filters={filters}
             options={filterOptions}
             onFilterChange={handleFilterChange}
             onClearAll={handleClearAll}
@@ -446,7 +484,7 @@ export function ProductListingView({
                 <p className="text-xs mt-1 text-red-600">{error}</p>
                 <button
                   type="button"
-                  onClick={() => fetchProducts(searchParams.toString())}
+                  onClick={() => executeFilterFetch(filters, currentSort, currentPage, false)}
                   className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-red-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-red-700 transition-colors"
                 >
                   <RefreshCw className="h-3.5 w-3.5" />

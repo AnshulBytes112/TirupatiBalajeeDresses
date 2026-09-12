@@ -48,13 +48,24 @@ export function MobileFilterDrawer({
     };
   }, [filterOpen, sortOpen]);
 
-  // Calculate active filter count
+  // Calculate active filter count for sticky top bar
   const activeCount = Object.entries(filters).filter(
+    ([k, v]) => v !== undefined && v !== "" && v !== false
+  ).length;
+
+  // Calculate active draft count inside open drawer
+  const activeDraftCount = Object.entries(draftFilters).filter(
     ([k, v]) => v !== undefined && v !== "" && v !== false
   ).length;
 
   const handleApply = () => {
     onFilterChange(draftFilters);
+    setFilterOpen(false);
+  };
+
+  const handleClearAll = () => {
+    setDraftFilters({});
+    onClearAll();
     setFilterOpen(false);
   };
 
@@ -129,9 +140,9 @@ export function MobileFilterDrawer({
                 <h3 className="text-base font-black text-brand-navy-950 uppercase tracking-wide">
                   Filters
                 </h3>
-                {activeCount > 0 && (
+                {activeDraftCount > 0 && (
                   <span className="rounded-full bg-brand-yellow-400 text-brand-navy-950 text-[10px] font-black px-2 py-0.5">
-                    {activeCount} active
+                    {activeDraftCount} active
                   </span>
                 )}
               </div>
@@ -139,18 +150,15 @@ export function MobileFilterDrawer({
               <div className="flex items-center gap-3">
                 <button
                   type="button"
-                  onClick={() => {
-                    setDraftFilters({});
-                    onClearAll();
-                  }}
-                  className="text-xs font-bold text-slate-500 hover:text-red-600 underline"
+                  onClick={handleClearAll}
+                  className="text-xs font-bold text-slate-500 hover:text-red-600 underline cursor-pointer"
                 >
                   Clear All
                 </button>
                 <button
                   type="button"
                   onClick={() => setFilterOpen(false)}
-                  className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                  className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 cursor-pointer"
                   aria-label="Close filters"
                 >
                   <X className="h-5 w-5" />
@@ -578,18 +586,15 @@ export function MobileFilterDrawer({
             <div className="border-t border-slate-200 p-4 bg-white flex items-center gap-3">
               <button
                 type="button"
-                onClick={() => {
-                  setDraftFilters({});
-                  onClearAll();
-                }}
-                className="flex-1 rounded-xl border border-slate-300 py-3 text-center text-xs font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-50"
+                onClick={handleClearAll}
+                className="flex-1 rounded-xl border border-slate-300 py-3 text-center text-xs font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-50 cursor-pointer active:scale-98 transition-all"
               >
                 Clear All
               </button>
               <button
                 type="button"
                 onClick={handleApply}
-                className="flex-2 rounded-xl bg-brand-yellow-400 py-3 text-center text-xs font-black uppercase tracking-wider text-brand-navy-950 shadow-sm active:scale-98"
+                className="flex-2 rounded-xl bg-brand-yellow-400 py-3 text-center text-xs font-black uppercase tracking-wider text-brand-navy-950 shadow-sm active:scale-98 cursor-pointer hover:bg-yellow-300 transition-all"
               >
                 Apply Filters
               </button>
