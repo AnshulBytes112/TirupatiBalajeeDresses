@@ -111,21 +111,19 @@ export function ProductListingView({
       try {
         const url = `/api/products?${paramsString}`;
         const res = await fetch(url);
-        if (!res.ok) {
-          throw new Error(`Failed to fetch products: ${res.statusText}`);
+        const data = await res.json().catch(() => null);
+        if (!res.ok || !data?.success) {
+          throw new Error(
+            data?.error?.message || data?.message || `Failed to fetch products (${res.status}: ${res.statusText})`
+          );
         }
-        const data = await res.json();
-        if (data.success) {
-          if (append) {
-            setProducts((prev) => [...prev, ...data.data]);
-          } else {
-            setProducts(data.data);
-          }
-          if (data.meta?.pagination) {
-            setPagination(data.meta.pagination);
-          }
+        if (append) {
+          setProducts((prev) => [...prev, ...data.data]);
         } else {
-          throw new Error(data.message || "Failed to load products");
+          setProducts(data.data);
+        }
+        if (data.meta?.pagination) {
+          setPagination(data.meta.pagination);
         }
       } catch (err: any) {
         console.error("PLP Fetch error:", err);
