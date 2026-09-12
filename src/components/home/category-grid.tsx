@@ -28,9 +28,9 @@ interface CategoryGridProps {
 }
 
 export function CategoryGrid({ cards, className }: CategoryGridProps) {
+  const previewDevice = usePreviewDevice();
   if (!cards || cards.length === 0) return null;
   const activeCards = cards;
-  const previewDevice = usePreviewDevice();
 
   const gridClass =
     previewDevice === "mobile"
