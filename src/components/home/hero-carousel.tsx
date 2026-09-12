@@ -183,6 +183,10 @@ export function HeroCarousel({ slides, className }: HeroCarouselProps) {
                         src={slide.imageSrc}
                         alt={slide.imageAlt}
                         fill
+                        unoptimized={Boolean(
+                          slide.imageSrc?.startsWith("data:") ||
+                          slide.imageSrc?.startsWith("http")
+                        )}
                         priority={idx === 0}
                         className="object-contain object-bottom sm:object-right-bottom scale-95 sm:scale-100 origin-bottom"
                         sizes="(max-width: 640px) 70vw, (max-width: 1024px) 50vw, 550px"

@@ -37,9 +37,19 @@ export function ImageUploadField({
   };
 
   const uploadFile = async (file: File) => {
+    // Immediate client-side preview via FileReader
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      if (result) {
+        onChange(result);
+      }
+    };
+    reader.readAsDataURL(file);
+
     const key = getAdminKey();
     if (!key) {
-      toast.error("Super-Admin authentication key required to upload files.");
+      toast.info("Image loaded. (Authenticate as Super-Admin to upload to cloud)");
       return;
     }
 
@@ -64,10 +74,11 @@ export function ImageUploadField({
         }
       } else {
         const err = await res.json().catch(() => ({}));
-        toast.error(err.message || "Failed to upload image");
+        // Still keep client-side FileReader result so user doesn't lose photo
+        toast.error(err.message || "Cloud upload note: keeping image locally");
       }
     } catch (err) {
-      toast.error("Network error during image upload");
+      toast.info("Image cached locally.");
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -116,14 +127,11 @@ export function ImageUploadField({
         {/* Photo Thumbnail Preview */}
         <div className="relative h-10 w-10 shrink-0 rounded-xl border border-[#E5DCD3] bg-white overflow-hidden flex items-center justify-center shadow-xs">
           {value ? (
-            <Image
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
               src={value}
               alt="Thumbnail"
-              fill
-              className="object-contain p-0.5"
-              onError={(e) => {
-                (e.target as HTMLElement).style.display = "none";
-              }}
+              className="h-full w-full object-contain p-0.5"
             />
           ) : (
             <ImageIcon className="h-4 w-4 text-stone-400" />

@@ -42,6 +42,10 @@ export async function POST(req: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
+    // Generate base64 data URL (works in Serverless/Vercel/Production without S3/filesystem dependency)
+    const mimeType = file.type || "image/jpeg";
+    const base64DataUrl = `data:${mimeType};base64,${buffer.toString("base64")}`;
+
     // Sanitize filename
     const ext = path.extname(file.name) || ".jpg";
     const cleanBase = path
@@ -50,19 +54,24 @@ export async function POST(req: NextRequest) {
       .replace(/[^a-z0-9]/g, "-");
     const filename = `${cleanBase}-${Date.now()}${ext}`;
 
-    const uploadDir = path.join(process.cwd(), "public", "uploads");
-    await mkdir(uploadDir, { recursive: true });
+    let publicUrl = base64DataUrl;
 
-    const filePath = path.join(uploadDir, filename);
-    await writeFile(filePath, buffer);
-
-    const publicUrl = `/uploads/${filename}`;
+    // Attempt local filesystem write if environment permits (local dev / Docker)
+    try {
+      const uploadDir = path.join(process.cwd(), "public", "uploads");
+      await mkdir(uploadDir, { recursive: true });
+      const filePath = path.join(uploadDir, filename);
+      await writeFile(filePath, buffer);
+    } catch {
+      // In serverless / read-only filesystem environments (Vercel, AWS Lambda), fallback safely
+      publicUrl = base64DataUrl;
+    }
 
     await logAuditEvent({
       action: "MEDIA_UPLOAD",
       module: "HOMEPAGE",
       feature: "MEDIA_UPLOAD",
-      details: { filename, publicUrl, sizeBytes: buffer.length },
+      details: { filename, sizeBytes: buffer.length },
       req,
     });
 

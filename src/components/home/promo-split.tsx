@@ -171,6 +171,10 @@ export function PromoSplit({
                     src={item.imageSrc || "/images/summer-flatlay.jpg"}
                     alt={item.title}
                     fill
+                    unoptimized={Boolean(
+                      item.imageSrc?.startsWith("data:") ||
+                      item.imageSrc?.startsWith("http")
+                    )}
                     className="object-contain p-1"
                     sizes="(max-width: 768px) 50vw, 300px"
                   />

@@ -114,6 +114,10 @@ export function PromoCombos({
                     src={item.imageSrc || "/images/combo-kids.jpg"}
                     alt={item.title}
                     fill
+                    unoptimized={Boolean(
+                      item.imageSrc?.startsWith("data:") ||
+                      item.imageSrc?.startsWith("http")
+                    )}
                     className="object-cover"
                     sizes="200px"
                   />

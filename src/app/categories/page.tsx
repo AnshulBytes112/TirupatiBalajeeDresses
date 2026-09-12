@@ -88,6 +88,9 @@ export default async function CategoriesDiscoveryPage() {
                       src={imageSrc}
                       alt={cat.name}
                       fill
+                      unoptimized={Boolean(
+                        imageSrc.startsWith("data:") || imageSrc.startsWith("http")
+                      )}
                       className="object-cover object-top group-hover:scale-105 transition-transform duration-500"
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     />

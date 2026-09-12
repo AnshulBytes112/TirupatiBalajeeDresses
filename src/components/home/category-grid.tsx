@@ -32,12 +32,29 @@ export function CategoryGrid({ cards, className }: CategoryGridProps) {
   if (!cards || cards.length === 0) return null;
   const activeCards = cards;
 
-  const gridClass =
-    previewDevice === "mobile"
-      ? "grid-cols-2 gap-2.5"
-      : previewDevice === "tablet"
-      ? "grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3"
-      : "grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-9 gap-2.5 sm:gap-3 lg:gap-3.5";
+  // Dynamic column layout that adjusts automatically based on card count & viewport
+  const getGridClass = () => {
+    if (previewDevice === "mobile") {
+      return activeCards.length === 1
+        ? "flex flex-wrap gap-3 justify-start"
+        : "grid grid-cols-2 gap-2.5";
+    }
+    if (previewDevice === "tablet") {
+      if (activeCards.length <= 2) return "flex flex-wrap gap-3.5 justify-start";
+      if (activeCards.length === 3) return "grid grid-cols-3 gap-3 max-w-2xl";
+      return "grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3";
+    }
+
+    // Desktop
+    const count = activeCards.length;
+    if (count <= 2) return "flex flex-wrap gap-4 justify-start";
+    if (count === 3) return "grid grid-cols-2 sm:grid-cols-3 gap-3.5 max-w-3xl";
+    if (count === 4) return "grid grid-cols-2 sm:grid-cols-4 gap-3.5 max-w-4xl";
+    if (count <= 6) return "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3";
+    return "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-8 xl:grid-cols-9 gap-2.5 sm:gap-3 lg:gap-3.5";
+  };
+
+  const isFewCards = activeCards.length <= 2;
 
   return (
     <section className={cn("pt-4 sm:pt-6", className)}>
@@ -56,31 +73,40 @@ export function CategoryGrid({ cards, className }: CategoryGridProps) {
           </Link>
         </div>
 
-        {/* Unified Category Cards Grid: Applied across all items */}
-        <div className={cn("grid items-stretch", gridClass)}>
+        {/* Dynamic Category Cards Grid: Adapts cleanly to 1 card, 3 cards, or many cards */}
+        <div className={cn("items-stretch", getGridClass())}>
           {activeCards.map((cat, index) => (
             <Link
               key={cat.id}
               href={cat.href}
               className={cn(
-                "group col-span-1 rounded-2xl bg-white border p-2.5 sm:p-3 flex flex-col justify-between shadow-xs hover:shadow-sm transition-all text-center",
+                "group rounded-2xl bg-white border p-3 sm:p-3.5 flex flex-col justify-between shadow-xs hover:shadow-md transition-all text-center min-w-0",
+                isFewCards
+                  ? "w-48 sm:w-56 max-w-[240px] shrink-0"
+                  : "col-span-1 w-full",
                 cat.borderColor || "border-slate-200/80",
                 cat.hoverBorderColor || "hover:border-slate-400"
               )}
             >
               {/* Circular Product / Icon Container */}
-              <div className="relative aspect-square w-full rounded-full bg-[#F3F4F6] flex items-center justify-center p-2 mb-2">
-                <span className="absolute top-0 right-0 text-sm sm:text-base select-none">
-                  {cat.badgeEmoji}
-                </span>
+              <div className="relative aspect-square w-full max-w-[140px] mx-auto rounded-full bg-[#F3F4F6] flex items-center justify-center p-2 mb-2.5">
+                {cat.badgeEmoji && (
+                  <span className="absolute top-0 right-0 text-sm sm:text-base select-none z-10">
+                    {cat.badgeEmoji}
+                  </span>
+                )}
                 <div className="relative w-full h-full flex items-center justify-center rounded-full overflow-hidden">
                   {cat.imageSrc ? (
                     <Image
                       src={cat.imageSrc}
                       alt={cat.name}
                       fill
-                      className="object-cover group-hover:scale-105 transition-transform mix-blend-multiply"
-                      sizes="(max-width: 640px) 45vw, (max-width: 1024px) 20vw, 120px"
+                      unoptimized={Boolean(
+                        cat.imageSrc.startsWith("data:") ||
+                        cat.imageSrc.startsWith("http")
+                      )}
+                      className="object-cover group-hover:scale-105 transition-transform"
+                      sizes="(max-width: 640px) 45vw, (max-width: 1024px) 20vw, 150px"
                       priority={index < 5}
                     />
                   ) : (
@@ -90,15 +116,17 @@ export function CategoryGrid({ cards, className }: CategoryGridProps) {
               </div>
 
               {/* Title & 2-Line Value Subtitle */}
-              <div>
-                <h3 className="text-xs sm:text-[12.5px] lg:text-[13px] font-black text-brand-navy-950 leading-tight">
+              <div className="w-full min-w-0 px-0.5">
+                <h3 className="text-xs sm:text-[13px] font-black text-brand-navy-950 leading-snug break-words hyphens-auto">
                   {cat.name}
                 </h3>
-                <p className="text-[9.5px] sm:text-[10px] lg:text-[10.5px] font-semibold text-slate-500 mt-1 leading-tight">
-                  {cat.subtitleLine1}
-                  <br />
-                  {cat.subtitleLine2}
-                </p>
+                {(cat.subtitleLine1 || cat.subtitleLine2) && (
+                  <p className="text-[10px] sm:text-[10.5px] font-semibold text-slate-500 mt-1 leading-snug break-words">
+                    {cat.subtitleLine1}
+                    {cat.subtitleLine1 && cat.subtitleLine2 && <br />}
+                    {cat.subtitleLine2}
+                  </p>
+                )}
               </div>
             </Link>
           ))}
