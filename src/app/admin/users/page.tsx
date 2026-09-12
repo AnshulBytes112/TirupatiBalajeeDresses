@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { SuperAdminNav } from "@/components/admin/super-admin-nav";
+import { DressLoadingBuffer } from "@/components/ui/dress-loading-buffer";
 import {
   ALL_PERMISSIONS,
   RBAC_MODULES,
@@ -276,7 +277,7 @@ export default function AdminUsersRBACPage() {
   if (isCheckingAuth) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-[#FAF7F2]">
-        <Loader2 className="h-8 w-8 animate-spin text-[#1C1917]" />
+        <DressLoadingBuffer size="md" message="Verifying Super-Admin credentials..." />
       </div>
     );
   }
@@ -438,9 +439,8 @@ export default function AdminUsersRBACPage() {
         {/* Users Table */}
         <div className="rounded-3xl border border-[#E5DCD3] bg-white overflow-hidden shadow-xs">
           {isLoading ? (
-            <div className="p-12 text-center space-y-2">
-              <Loader2 className="h-6 w-6 animate-spin text-stone-400 mx-auto" />
-              <p className="text-xs text-stone-500 font-semibold">Loading users database...</p>
+            <div className="p-12 text-center">
+              <DressLoadingBuffer size="sm" message="Loading users & permissions database..." />
             </div>
           ) : users.length === 0 ? (
             <div className="p-12 text-center space-y-2">

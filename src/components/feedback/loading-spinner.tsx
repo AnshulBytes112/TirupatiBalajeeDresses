@@ -1,25 +1,17 @@
-import { Loader2 } from "lucide-react";
+import { DressLoadingBuffer } from "@/components/ui/dress-loading-buffer";
 import { cn } from "@/lib/utils";
 
 export interface LoadingSpinnerProps {
   size?: "sm" | "md" | "lg";
   className?: string;
   label?: string;
+  submessage?: string;
 }
 
-const sizeMap = {
-  sm: "h-4 w-4",
-  md: "h-8 w-8",
-  lg: "h-12 w-12",
-};
-
-export function LoadingSpinner({ size = "md", className, label }: LoadingSpinnerProps) {
+export function LoadingSpinner({ size = "md", className, label, submessage }: LoadingSpinnerProps) {
   return (
-    <div className="flex flex-col items-center justify-center p-8 space-y-3">
-      <Loader2
-        className={cn("animate-spin text-brand-yellow-500", sizeMap[size], className)}
-      />
-      {label && <p className="text-sm font-medium text-slate-500">{label}</p>}
+    <div className={cn("flex items-center justify-center", className)}>
+      <DressLoadingBuffer size={size} message={label} submessage={submessage} />
     </div>
   );
 }

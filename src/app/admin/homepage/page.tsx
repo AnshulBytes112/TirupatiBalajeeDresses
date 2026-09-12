@@ -38,6 +38,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { Container } from "@/components/layout/container";
+import { DressLoadingBuffer } from "@/components/ui/dress-loading-buffer";
 import {
   DynamicHomepageData,
   DynamicHeroSlide,
@@ -393,7 +394,7 @@ export default function AdminHomepageCMS() {
   if (isCheckingAuth) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-[#FAF7F2]">
-        <Loader2 className="h-8 w-8 animate-spin text-[#1C1917]" />
+        <DressLoadingBuffer size="md" message="Verifying Super-Admin credentials..." />
       </div>
     );
   }

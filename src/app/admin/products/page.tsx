@@ -41,6 +41,7 @@ import { Container } from "@/components/layout/container";
 import { SuperAdminNav } from "@/components/admin/super-admin-nav";
 import { ImageUploadField } from "@/components/admin/image-upload-field";
 import { BulkImportModal } from "@/components/admin/bulk-import-modal";
+import { DressLoadingBuffer } from "@/components/ui/dress-loading-buffer";
 
 interface ProductListItem {
   id: string;
@@ -593,7 +594,7 @@ export default function AdminProductsPage() {
   if (isCheckingAuth) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-[#FAF7F2]">
-        <Loader2 className="h-8 w-8 animate-spin text-[#1C1917]" />
+        <DressLoadingBuffer size="md" message="Verifying Super-Admin credentials..." />
       </div>
     );
   }
@@ -774,9 +775,8 @@ export default function AdminProductsPage() {
               <tbody className="divide-y divide-[#E5DCD3]">
                 {isLoading ? (
                   <tr>
-                    <td colSpan={7} className="py-12 text-center text-stone-500">
-                      <Loader2 className="h-6 w-6 animate-spin mx-auto text-amber-500 mb-2" />
-                      <p className="font-semibold text-xs">Loading Catalog Products...</p>
+                    <td colSpan={7} className="py-12 text-center">
+                      <DressLoadingBuffer size="sm" message="Loading Catalog Products..." />
                     </td>
                   </tr>
                 ) : products.length === 0 ? (

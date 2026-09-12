@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { SuperAdminNav } from "@/components/admin/super-admin-nav";
+import { DressLoadingBuffer } from "@/components/ui/dress-loading-buffer";
 
 export default function AdminAuditLogsPage() {
   const [adminKey, setAdminKey] = React.useState<string>("");
@@ -137,7 +138,7 @@ export default function AdminAuditLogsPage() {
   if (isCheckingAuth) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-[#FAF7F2]">
-        <Loader2 className="h-8 w-8 animate-spin text-[#1C1917]" />
+        <DressLoadingBuffer size="md" message="Verifying Super-Admin credentials..." />
       </div>
     );
   }
@@ -298,9 +299,8 @@ export default function AdminAuditLogsPage() {
         {/* Audit Logs Table */}
         <div className="rounded-3xl border border-[#E5DCD3] bg-white overflow-hidden shadow-xs">
           {isLoading ? (
-            <div className="p-12 text-center space-y-2">
-              <Loader2 className="h-6 w-6 animate-spin text-stone-400 mx-auto" />
-              <p className="text-xs text-stone-500 font-semibold">Loading audit logs...</p>
+            <div className="p-12 text-center">
+              <DressLoadingBuffer size="sm" message="Loading activity audit logs..." />
             </div>
           ) : logs.length === 0 ? (
             <div className="p-12 text-center space-y-2">

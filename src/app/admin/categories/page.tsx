@@ -36,6 +36,7 @@ import { Container } from "@/components/layout/container";
 import { ImageUploadField } from "@/components/admin/image-upload-field";
 import { SuperAdminNav } from "@/components/admin/super-admin-nav";
 import { BulkImportModal } from "@/components/admin/bulk-import-modal";
+import { DressLoadingBuffer } from "@/components/ui/dress-loading-buffer";
 
 interface CategoryItem {
   id: string;
@@ -280,7 +281,7 @@ export default function AdminCategoriesPage() {
   if (isCheckingAuth) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-[#FAF7F2]">
-        <Loader2 className="h-8 w-8 animate-spin text-[#1C1917]" />
+        <DressLoadingBuffer size="md" message="Verifying Super-Admin credentials..." />
       </div>
     );
   }
@@ -449,9 +450,8 @@ export default function AdminCategoriesPage() {
           </div>
 
           {isLoading ? (
-            <div className="py-16 text-center text-slate-400 space-y-2">
-              <Loader2 className="h-6 w-6 animate-spin mx-auto text-brand-navy-900" />
-              <p className="text-xs font-medium">Loading category hierarchy...</p>
+            <div className="py-16 text-center">
+              <DressLoadingBuffer size="sm" message="Loading category hierarchy..." />
             </div>
           ) : filteredCategories.length === 0 ? (
             <div className="py-16 text-center text-slate-500 space-y-3">

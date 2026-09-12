@@ -38,6 +38,7 @@ import {
 } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { SuperAdminNav } from "@/components/admin/super-admin-nav";
+import { DressLoadingBuffer } from "@/components/ui/dress-loading-buffer";
 
 export default function SuperAdminDeepAnalyticsDashboard() {
   const [adminKey, setAdminKey] = React.useState<string>("");
@@ -112,7 +113,7 @@ export default function SuperAdminDeepAnalyticsDashboard() {
   if (isCheckingAuth) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-[#FAF7F2]">
-        <Loader2 className="h-8 w-8 animate-spin text-[#1C1917]" />
+        <DressLoadingBuffer size="md" message="Verifying Super-Admin credentials..." />
       </div>
     );
   }
