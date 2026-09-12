@@ -146,23 +146,25 @@ export function PLPHeader({
         >
           Home
         </Link>
-        {breadcrumbs.map((item, idx) => (
-          <React.Fragment key={idx}>
-            <ChevronRight className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-            {item.href ? (
-              <Link
-                href={item.href}
-                className="hover:text-brand-navy-950 transition-colors font-semibold text-slate-600"
-              >
-                {item.label}
-              </Link>
-            ) : (
-              <span className="font-bold text-brand-navy-950 truncate max-w-[220px] sm:max-w-none">
-                {item.label}
-              </span>
-            )}
-          </React.Fragment>
-        ))}
+        {breadcrumbs
+          .filter((item) => item.label.toLowerCase() !== "home")
+          .map((item, idx) => (
+            <React.Fragment key={idx}>
+              <ChevronRight className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+              {item.href ? (
+                <Link
+                  href={item.href}
+                  className="hover:text-brand-navy-950 transition-colors font-semibold text-slate-600"
+                >
+                  {item.label}
+                </Link>
+              ) : (
+                <span className="font-bold text-brand-navy-950 truncate max-w-[220px] sm:max-w-none">
+                  {item.label}
+                </span>
+              )}
+            </React.Fragment>
+          ))}
       </nav>
 
       {/* Main Bar: Products Count & Sort Dropdown */}

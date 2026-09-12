@@ -124,7 +124,7 @@ export function CategoryHeroBanner({
         </div>
 
         {/* Heading */}
-        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-brand-navy-950 tracking-tight leading-tight">
+        <h1 className="text-xl sm:text-3xl lg:text-4xl font-black text-brand-navy-950 tracking-tight leading-tight">
           {bannerTitle}
         </h1>
 
@@ -134,7 +134,7 @@ export function CategoryHeroBanner({
         </p>
 
         {/* Feature Badges Row in Front */}
-        <div className="mt-3 sm:mt-4 flex flex-wrap items-center gap-2">
+        <div className="mt-3 sm:mt-4 flex flex-wrap items-center gap-1.5 sm:gap-2">
           <div className="flex items-center gap-1.5 rounded-xl bg-white/95 backdrop-blur-md px-2.5 sm:px-3 py-1 text-[10px] sm:text-xs font-bold text-brand-navy-950 border border-slate-200/90 shadow-2xs">
             {badge1.icon}
             <span>{badge1.label}</span>
@@ -147,11 +147,14 @@ export function CategoryHeroBanner({
             {badge3.icon}
             <span>{badge3.label}</span>
           </div>
+          <div className="sm:hidden flex items-center gap-1 rounded-xl bg-brand-yellow-400 px-2.5 py-1 text-[10px] font-black text-brand-navy-950 shadow-2xs">
+            <span>⭐ Certified School Wear</span>
+          </div>
         </div>
       </div>
 
-      {/* Handwritten Floating Badge on the side */}
-      <div className="absolute bottom-3 right-4 sm:right-6 bg-brand-yellow-400 text-brand-navy-950 text-[10px] sm:text-xs font-black px-2.5 py-1 rounded-lg shadow-md border border-brand-yellow-500 rotate-[-3deg] z-10">
+      {/* Desktop / Tablet Handwritten Floating Badge on the side */}
+      <div className="hidden sm:block absolute bottom-3 right-4 sm:right-6 bg-brand-yellow-400 text-brand-navy-950 text-xs font-black px-3 py-1.5 rounded-lg shadow-md border border-brand-yellow-500 rotate-[-3deg] z-10">
         ⭐ Certified School Wear
       </div>
     </div>

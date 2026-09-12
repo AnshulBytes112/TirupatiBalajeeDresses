@@ -14,6 +14,7 @@ import {
   ExternalLink,
   Lock,
   Sparkles,
+  GraduationCap,
 } from "lucide-react";
 
 interface SuperAdminNavProps {
@@ -25,6 +26,7 @@ interface SuperAdminNavProps {
 const ADMIN_NAV_LINKS = [
   { href: "/admin", label: "Analytics Hub", icon: TrendingUp, match: (path: string) => path === "/admin" },
   { href: "/admin/products", label: "Products & Stock", icon: ShoppingBag, match: (path: string) => path.startsWith("/admin/products") },
+  { href: "/admin/schools", label: "Schools & Bindings", icon: GraduationCap, match: (path: string) => path.startsWith("/admin/schools") },
   { href: "/admin/categories", label: "Categories", icon: FolderTree, match: (path: string) => path.startsWith("/admin/categories") },
   { href: "/admin/homepage", label: "Homepage CMS", icon: Layout, match: (path: string) => path.startsWith("/admin/homepage") },
   { href: "/admin/shipping", label: "Shipping & Pincodes", icon: Truck, match: (path: string) => path.startsWith("/admin/shipping") },

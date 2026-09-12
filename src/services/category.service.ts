@@ -178,7 +178,6 @@ export class CategoryService {
 
     // 3. Build dynamic breadcrumbs from category hierarchy
     const breadcrumbs: Array<{ label: string; href?: string }> = [
-      { label: "Home", href: "/" },
       { label: "All Categories", href: "/categories" },
     ];
 
