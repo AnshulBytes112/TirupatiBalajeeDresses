@@ -15,16 +15,6 @@ const DEFAULT_MAIN_ROUTES: SystemUrlOption[] = [
   { label: "Schools Directory", url: "/schools", group: "Pages" },
   { label: "Combos & Sets", url: "/combos", group: "Pages" },
   { label: "Special Offers & Deals", url: "/offers", group: "Pages" },
-  { label: "Summer Dress Collection", url: "/shop/school-uniforms/summer-dress", group: "Categories" },
-  { label: "Winter Dress Collection", url: "/shop/school-uniforms/winter-dress", group: "Categories" },
-  { label: "School Shoes", url: "/shop/school-shoes", group: "Categories" },
-  { label: "School Bags", url: "/shop/school-bags", group: "Categories" },
-  { label: "Thermals Collection", url: "/shop/thermals", group: "Categories" },
-  { label: "Socks & Stockings", url: "/shop/school-items/socks-stockings", group: "Categories" },
-  { label: "Belts & Accessories", url: "/shop/school-items/belts-accessories", group: "Categories" },
-  { label: "Stationery", url: "/shop/school-items/stationery", group: "Categories" },
-  { label: "Water Bottles", url: "/shop/school-items/water-bottles", group: "Categories" },
-  { label: "Lunch Boxes", url: "/shop/school-items/lunch-boxes", group: "Categories" },
 ];
 
 export interface SystemUrlSelectorProps {
