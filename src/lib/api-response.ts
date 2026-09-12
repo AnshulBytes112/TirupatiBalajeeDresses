@@ -34,6 +34,8 @@ export function errorResponse(error: unknown) {
     );
   }
 
+  const errorMessage =
+    error instanceof Error ? error.message : typeof error === "string" ? error : "An unexpected error occurred.";
   logger.error("Unhandled Server Error", { error: String(error) });
 
   return NextResponse.json(
@@ -41,7 +43,7 @@ export function errorResponse(error: unknown) {
       success: false,
       error: {
         code: "INTERNAL_SERVER_ERROR",
-        message: "An unexpected error occurred. Please try again later.",
+        message: errorMessage,
       },
     },
     { status: 500 }

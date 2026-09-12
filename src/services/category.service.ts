@@ -263,10 +263,28 @@ export class CategoryService {
     displayOrder?: number;
     isActive?: boolean;
   }) {
-    const generatedSlug = data.slug ? slugify(data.slug) : slugify(data.name);
+    if (!data.name || !data.name.trim()) {
+      throw new BadRequestError("Category name is required.");
+    }
+
+    const generatedSlug = data.slug && data.slug.trim() ? slugify(data.slug) : slugify(data.name);
 
     if (!generatedSlug) {
       throw new BadRequestError("Valid category name or slug is required.");
+    }
+
+    const parentId =
+      data.parentId && typeof data.parentId === "string" && data.parentId.trim() !== ""
+        ? data.parentId.trim()
+        : null;
+
+    if (parentId) {
+      const parentExists = await prisma.category.findUnique({
+        where: { id: parentId },
+      });
+      if (!parentExists) {
+        throw new BadRequestError("Selected parent category was not found.");
+      }
     }
 
     // Check slug uniqueness directly against the database table
@@ -278,12 +296,12 @@ export class CategoryService {
       if (existing.isDeleted) {
         // Restore existing soft-deleted category
         return categoryRepository.update(existing.id, {
-          name: data.name,
-          description: data.description || null,
-          imageUrl: data.imageUrl || null,
-          parentId: data.parentId || null,
-          displayOrder: data.displayOrder ?? 0,
-          isActive: data.isActive ?? true,
+          name: data.name.trim(),
+          description: data.description?.trim() || null,
+          imageUrl: data.imageUrl?.trim() || null,
+          parentId,
+          displayOrder: typeof data.displayOrder === "number" && !isNaN(data.displayOrder) ? data.displayOrder : 0,
+          isActive: data.isActive !== undefined ? Boolean(data.isActive) : true,
         });
       }
       throw new BadRequestError(
@@ -292,13 +310,13 @@ export class CategoryService {
     }
 
     return categoryRepository.create({
-      name: data.name,
+      name: data.name.trim(),
       slug: generatedSlug,
-      description: data.description || null,
-      imageUrl: data.imageUrl || null,
-      parentId: data.parentId || null,
-      displayOrder: data.displayOrder ?? 0,
-      isActive: data.isActive ?? true,
+      description: data.description?.trim() || null,
+      imageUrl: data.imageUrl?.trim() || null,
+      parentId,
+      displayOrder: typeof data.displayOrder === "number" && !isNaN(data.displayOrder) ? data.displayOrder : 0,
+      isActive: data.isActive !== undefined ? Boolean(data.isActive) : true,
     });
   }
 
@@ -319,7 +337,7 @@ export class CategoryService {
       throw new NotFoundError(`Category with ID '${id}'`);
     }
 
-    let nextSlug = data.slug ? slugify(data.slug) : undefined;
+    let nextSlug = data.slug && data.slug.trim() ? slugify(data.slug) : undefined;
     if (nextSlug && nextSlug !== existing.slug) {
       const slugConflict = await prisma.category.findUnique({
         where: { slug: nextSlug },
@@ -329,9 +347,35 @@ export class CategoryService {
       }
     }
 
+    const parentId =
+      data.parentId !== undefined
+        ? data.parentId && typeof data.parentId === "string" && data.parentId.trim() !== ""
+          ? data.parentId.trim()
+          : null
+        : undefined;
+
+    if (parentId) {
+      if (parentId === id) {
+        throw new BadRequestError("A category cannot be its own parent.");
+      }
+      const parentExists = await prisma.category.findUnique({
+        where: { id: parentId },
+      });
+      if (!parentExists) {
+        throw new BadRequestError("Selected parent category was not found.");
+      }
+    }
+
     return categoryRepository.update(id, {
-      ...data,
-      slug: nextSlug,
+      ...(data.name !== undefined && { name: data.name.trim() }),
+      ...(nextSlug !== undefined && { slug: nextSlug }),
+      ...(data.description !== undefined && { description: data.description?.trim() || null }),
+      ...(data.imageUrl !== undefined && { imageUrl: data.imageUrl?.trim() || null }),
+      ...(parentId !== undefined && { parentId }),
+      ...(data.displayOrder !== undefined && {
+        displayOrder: typeof data.displayOrder === "number" && !isNaN(data.displayOrder) ? data.displayOrder : 0,
+      }),
+      ...(data.isActive !== undefined && { isActive: Boolean(data.isActive) }),
     });
   }
 
