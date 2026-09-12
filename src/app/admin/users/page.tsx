@@ -404,7 +404,6 @@ export default function AdminUsersRBACPage() {
                 <option value="SUPER_ADMIN">Super Admin</option>
                 <option value="ADMIN">Admin</option>
                 <option value="STORE_STAFF">Store Staff</option>
-                <option value="CUSTOMER">Customer</option>
               </select>
             </div>
 

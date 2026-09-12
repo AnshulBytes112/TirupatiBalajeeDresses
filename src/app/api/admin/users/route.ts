@@ -39,34 +39,45 @@ export async function GET(req: NextRequest) {
     const page = parseInt(searchParams.get("page") || "1", 10);
     const limit = parseInt(searchParams.get("limit") || "50", 10);
 
-    const where: any = {};
+    const andConditions: any[] = [
+      // Only show accounts created by Super-Admin (staff/admin/created accounts), never regular customer review/storefront accounts
+      {
+        OR: [
+          { createdBy: "SUPER_ADMIN" },
+          { createdBy: { not: null } },
+          { role: { in: [Role.SUPER_ADMIN, Role.ADMIN, Role.STORE_STAFF] } },
+        ],
+      },
+    ];
 
     if (search) {
-      where.OR = [
-        { name: { contains: search, mode: "insensitive" } },
-        { email: { contains: search, mode: "insensitive" } },
-        { username: { contains: search, mode: "insensitive" } },
-        { phone: { contains: search } },
-      ];
+      andConditions.push({
+        OR: [
+          { name: { contains: search, mode: "insensitive" } },
+          { email: { contains: search, mode: "insensitive" } },
+          { username: { contains: search, mode: "insensitive" } },
+          { phone: { contains: search } },
+        ],
+      });
     }
 
     if (role && role !== "ALL") {
-      where.role = role as Role;
+      andConditions.push({ role: role as Role });
     }
 
     if (status === "suspended") {
-      where.isSuspended = true;
-      where.isDeleted = false;
+      andConditions.push({ isSuspended: true, isDeleted: false });
     } else if (status === "deleted") {
-      where.isDeleted = true;
+      andConditions.push({ isDeleted: true });
     } else if (status === "active") {
-      where.isActive = true;
-      where.isSuspended = false;
-      where.isDeleted = false;
+      andConditions.push({ isActive: true, isSuspended: false, isDeleted: false });
     } else if (status !== "all") {
-      // default: show non-deleted
-      where.isDeleted = false;
+      andConditions.push({ isDeleted: false });
+    } else {
+      andConditions.push({ isDeleted: false });
     }
+
+    const where = { AND: andConditions };
 
     const [users, total] = await Promise.all([
       prisma.user.findMany({
