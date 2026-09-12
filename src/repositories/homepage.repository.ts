@@ -192,10 +192,12 @@ export class HomepageRepository {
     content: any,
     metadata?: { title?: string; subtitle?: string; badge?: string; displayOrder?: number }
   ) {
+    const safeContent = content === undefined ? [] : JSON.parse(JSON.stringify(content));
+
     return prisma.homepageSection.upsert({
       where: { sectionKey },
       update: {
-        content,
+        content: safeContent,
         title: metadata?.title,
         subtitle: metadata?.subtitle,
         badge: metadata?.badge,
@@ -204,7 +206,7 @@ export class HomepageRepository {
       },
       create: {
         sectionKey,
-        content,
+        content: safeContent,
         title: metadata?.title,
         subtitle: metadata?.subtitle,
         badge: metadata?.badge,
@@ -220,26 +222,26 @@ export class HomepageRepository {
   async saveEntireHomepage(data: Partial<DynamicHomepageData>) {
     const promises: Promise<any>[] = [];
 
-    if (data.heroSlides) {
+    if (data.heroSlides !== undefined) {
       promises.push(this.updateSection("hero_carousel", data.heroSlides));
     }
-    if (data.categoryCards) {
+    if (data.categoryCards !== undefined) {
       promises.push(this.updateSection("category_grid", data.categoryCards));
     }
-    if (data.promoSplitCards) {
+    if (data.promoSplitCards !== undefined) {
       promises.push(this.updateSection("promo_split", data.promoSplitCards));
-    } else if (data.promoSplit) {
+    } else if (data.promoSplit !== undefined) {
       promises.push(this.updateSection("promo_split", data.promoSplit));
     }
-    if (data.promoComboCards) {
+    if (data.promoComboCards !== undefined) {
       promises.push(this.updateSection("promo_combos", data.promoComboCards));
-    } else if (data.promoCombos) {
+    } else if (data.promoCombos !== undefined) {
       promises.push(this.updateSection("promo_combos", data.promoCombos));
     }
-    if (data.trendingProducts) {
+    if (data.trendingProducts !== undefined) {
       promises.push(this.updateSection("trending_products", data.trendingProducts));
     }
-    if (data.trendingSettings) {
+    if (data.trendingSettings !== undefined) {
       promises.push(this.updateSection("trending_section", data.trendingSettings));
     }
 

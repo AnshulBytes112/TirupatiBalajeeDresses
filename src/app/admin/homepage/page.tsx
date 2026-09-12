@@ -157,6 +157,12 @@ export default function AdminHomepageCMS() {
   }
 
   async function handleSaveAll() {
+    const key = (adminKey || (typeof window !== "undefined" ? localStorage.getItem("tirupati_admin_key") : ""))?.trim();
+    if (!key) {
+      toast.error("Super-Admin key is required to publish changes");
+      return;
+    }
+
     setIsSaving(true);
     try {
       const payload: Partial<DynamicHomepageData> = {
@@ -172,16 +178,16 @@ export default function AdminHomepageCMS() {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          "x-admin-key": adminKey,
+          "x-admin-key": key,
         },
         body: JSON.stringify(payload),
       });
 
-      if (res.ok) {
+      const json = await res.json().catch(() => ({}));
+      if (res.ok && json.success) {
         toast.success("Homepage published and saved successfully!");
       } else {
-        const err = await res.json();
-        toast.error(err.message || "Failed to publish homepage changes");
+        toast.error(json.error?.message || json.message || "Failed to publish homepage changes");
       }
     } catch (e) {
       toast.error("Network error saving homepage");
