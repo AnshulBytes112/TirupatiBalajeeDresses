@@ -2,239 +2,272 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { AccountLayout } from "@/components/account/account-layout";
+import { useAuth } from "@/context/auth-context";
 import {
-  User,
-  Shield,
-  Key,
-  PackageCheck,
+  Package,
   Heart,
-  ShoppingBag,
-  LogOut,
-  GraduationCap,
-  Sparkles,
+  MapPin,
   ArrowRight,
+  ShieldCheck,
+  Truck,
   CheckCircle2,
-  Lock,
+  Clock,
+  ExternalLink,
+  Plus,
 } from "lucide-react";
-import { toast } from "sonner";
-import { Container } from "@/components/layout/container";
 
-export default function AccountPage() {
-  const router = useRouter();
-  const [adminKey, setAdminKey] = React.useState("");
-  const [isAdminLoggedIn, setIsAdminLoggedIn] = React.useState(false);
+export default function AccountOverviewPage() {
+  const { profile } = useAuth();
+  const [stats, setStats] = React.useState({
+    ordersCount: 0,
+    addressesCount: 0,
+    wishlistCount: 0,
+    reviewsCount: 0,
+  });
+  const [defaultAddress, setDefaultAddress] = React.useState<any>(null);
+  const [recentOrders, setRecentOrders] = React.useState<any[]>([]);
+  const [isLoadingData, setIsLoadingData] = React.useState(true);
 
   React.useEffect(() => {
-    if (typeof window !== "undefined") {
-      const key = localStorage.getItem("tirupati_admin_key");
-      setIsAdminLoggedIn(Boolean(key && key.trim()));
+    async function loadDashboard() {
+      try {
+        const [profileRes, ordersRes, addressRes] = await Promise.all([
+          fetch("/api/account/profile").then((r) => r.json()).catch(() => null),
+          fetch("/api/account/orders?limit=3").then((r) => r.json()).catch(() => null),
+          fetch("/api/account/addresses").then((r) => r.json()).catch(() => null),
+        ]);
+
+        if (profileRes?.data?.stats) {
+          setStats(profileRes.data.stats);
+        }
+        if (ordersRes?.data) {
+          setRecentOrders(ordersRes.data);
+        }
+        if (addressRes?.data) {
+          const def = addressRes.data.find((a: any) => a.isDefault) || addressRes.data[0] || null;
+          setDefaultAddress(def);
+        }
+      } finally {
+        setIsLoadingData(false);
+      }
     }
+
+    loadDashboard();
   }, []);
 
-  const handleAdminLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!adminKey.trim()) {
-      toast.error("Please enter a valid Admin Secret Key");
-      return;
-    }
-    localStorage.setItem("tirupati_admin_key", adminKey.trim());
-    setIsAdminLoggedIn(true);
-    toast.success("Super-Admin session authenticated!");
-    router.push("/admin");
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem("tirupati_admin_key");
-    localStorage.removeItem("user_session");
-    setIsAdminLoggedIn(false);
-    toast.success("Logged out successfully");
-    window.location.reload();
-  };
-
   return (
-    <div className="min-h-screen bg-brand-cream-50/40 py-8 sm:py-12">
-      <Container size="md">
-        <div className="rounded-3xl bg-white border border-slate-200 p-6 sm:p-10 shadow-xl">
-          {/* Header Profile Info */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-slate-100">
-            <div className="flex items-center gap-4">
-              <div className="h-16 w-16 rounded-2xl bg-brand-navy-950 text-white flex items-center justify-center font-black text-xl shadow-md">
-                <User className="h-8 w-8" />
+    <AccountLayout
+      title={`Welcome back, ${profile?.name?.split(" ")[0] || "Friend"}!`}
+      description="Manage your school dress orders, addresses, and account preferences in one place."
+    >
+      <div className="space-y-6">
+        {/* Metric Cards Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          <Link
+            href="/account/orders"
+            className="group rounded-2xl border border-slate-200 bg-white p-4 shadow-xs transition hover:border-brand-navy-900 hover:shadow-md"
+          >
+            <div className="flex items-center justify-between">
+              <div className="rounded-xl bg-blue-50 p-2.5 text-brand-navy-950">
+                <Package className="h-5 w-5" />
               </div>
-              <div>
+              <span className="text-xl font-black text-brand-navy-950">
+                {stats.ordersCount}
+              </span>
+            </div>
+            <p className="mt-3 text-xs font-bold text-slate-600 group-hover:text-brand-navy-900">
+              Total Orders
+            </p>
+          </Link>
+
+          <Link
+            href="/account/wishlist"
+            className="group rounded-2xl border border-slate-200 bg-white p-4 shadow-xs transition hover:border-brand-navy-900 hover:shadow-md"
+          >
+            <div className="flex items-center justify-between">
+              <div className="rounded-xl bg-rose-50 p-2.5 text-rose-600">
+                <Heart className="h-5 w-5" />
+              </div>
+              <span className="text-xl font-black text-brand-navy-950">
+                {stats.wishlistCount}
+              </span>
+            </div>
+            <p className="mt-3 text-xs font-bold text-slate-600 group-hover:text-rose-600">
+              Saved Items
+            </p>
+          </Link>
+
+          <Link
+            href="/account/addresses"
+            className="group rounded-2xl border border-slate-200 bg-white p-4 shadow-xs transition hover:border-brand-navy-900 hover:shadow-md col-span-2 sm:col-span-1"
+          >
+            <div className="flex items-center justify-between">
+              <div className="rounded-xl bg-amber-50 p-2.5 text-amber-700">
+                <MapPin className="h-5 w-5" />
+              </div>
+              <span className="text-xl font-black text-brand-navy-950">
+                {stats.addressesCount}
+              </span>
+            </div>
+            <p className="mt-3 text-xs font-bold text-slate-600 group-hover:text-amber-800">
+              Saved Addresses
+            </p>
+          </Link>
+        </div>
+
+        {/* Quick Summary Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Default Shipping Address */}
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <div className="flex items-center gap-2">
-                  <h1 className="text-xl sm:text-2xl font-black text-brand-navy-950">
-                    {isAdminLoggedIn ? "Administrator Account" : "Welcome to TirupatiBalajee"}
-                  </h1>
-                  {isAdminLoggedIn && (
-                    <span className="rounded-full bg-brand-navy-950 px-2.5 py-0.5 text-[10px] font-black uppercase text-amber-400">
-                      Super Admin
-                    </span>
-                  )}
+                  <MapPin className="h-4 w-4 text-amber-600" />
+                  <h3 className="text-sm font-black text-slate-900">Default Shipping Address</h3>
                 </div>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  {isAdminLoggedIn
-                    ? "Active administrative session with catalog & affiliation permissions"
-                    : "Manage your uniform orders, tracking, and school dress preferences"}
-                </p>
+                <Link
+                  href="/account/addresses"
+                  className="text-xs font-bold text-brand-navy-900 hover:underline"
+                >
+                  Manage
+                </Link>
+              </div>
+
+              {defaultAddress ? (
+                <div className="mt-4 space-y-1 text-xs text-slate-600">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-slate-900">{defaultAddress.fullName}</span>
+                    <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-900">
+                      DEFAULT
+                    </span>
+                  </div>
+                  <p>{defaultAddress.addressLine1}</p>
+                  {defaultAddress.addressLine2 && <p>{defaultAddress.addressLine2}</p>}
+                  <p>
+                    {defaultAddress.city}, {defaultAddress.state} - <span className="font-mono font-semibold">{defaultAddress.postalCode}</span>
+                  </p>
+                  <p className="text-slate-500 pt-1">Phone: {defaultAddress.phoneNumber}</p>
+                </div>
+              ) : (
+                <div className="py-6 text-center text-xs text-slate-400">
+                  <p>No addresses added yet.</p>
+                  <Link
+                    href="/account/addresses"
+                    className="inline-flex items-center gap-1 mt-2 text-xs font-bold text-brand-navy-900 hover:underline"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    <span>Add your first delivery address</span>
+                  </Link>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-4 pt-3 border-t border-slate-50 flex items-center justify-between text-[11px] text-slate-400">
+              <span>Verified Delivery Address</span>
+              <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
+            </div>
+          </div>
+
+          {/* Quick Support & Delivery Tracker Card */}
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <Truck className="h-4 w-4 text-blue-900" />
+                  <h3 className="text-sm font-black text-slate-900">Delivery Assistance</h3>
+                </div>
+                <Link
+                  href="/account/support"
+                  className="text-xs font-bold text-brand-navy-900 hover:underline"
+                >
+                  Help Center
+                </Link>
+              </div>
+
+              <div className="mt-4 space-y-3">
+                <div className="rounded-xl bg-amber-50/60 border border-amber-200/50 p-3 text-xs text-amber-950">
+                  <p className="font-bold">Need help with sizing or school dress requirements?</p>
+                  <p className="text-amber-800/90 mt-0.5">
+                    Our uniform specialists are available via WhatsApp and phone for immediate sizing consultation.
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-between text-xs pt-1">
+                  <span className="text-slate-500">Fast Express Dispatch:</span>
+                  <span className="font-bold text-emerald-700">Same Day / 24 Hours</span>
+                </div>
               </div>
             </div>
 
-            {isAdminLoggedIn && (
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-xs font-bold text-rose-700 hover:bg-rose-100 transition-colors cursor-pointer"
+            <div className="mt-4 pt-3 border-t border-slate-50">
+              <Link
+                href="/shop"
+                className="flex items-center justify-center gap-2 w-full rounded-xl bg-brand-navy-950 py-2.5 text-xs font-bold text-white hover:bg-brand-navy-800 transition"
               >
-                <LogOut className="h-4 w-4" />
-                <span>Logout Session</span>
-              </button>
+                <span>Browse Store Catalog</span>
+                <ArrowRight className="h-3.5 w-3.5 text-amber-400" />
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Recent Orders Section */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <h3 className="text-sm font-black text-slate-900">Recent Orders</h3>
+            <Link
+              href="/account/orders"
+              className="text-xs font-bold text-brand-navy-900 hover:underline"
+            >
+              View All Orders
+            </Link>
+          </div>
+
+          <div className="mt-4">
+            {recentOrders.length > 0 ? (
+              <div className="divide-y divide-slate-100">
+                {recentOrders.map((order) => (
+                  <div key={order.id} className="py-3 flex items-center justify-between gap-4">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono font-bold text-xs text-slate-900">
+                          #{order.orderNumber}
+                        </span>
+                        <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-900 uppercase">
+                          {order.status}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        {order.items?.length || 1} items &bull; Total: ₹{order.totalAmount}
+                      </p>
+                    </div>
+
+                    <Link
+                      href="/account/orders"
+                      className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50"
+                    >
+                      Details
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="py-8 text-center text-xs text-slate-400">
+                <Package className="h-8 w-8 mx-auto text-slate-300 mb-2" />
+                <p>You haven&apos;t placed any orders yet.</p>
+                <Link
+                  href="/shop"
+                  className="inline-flex items-center gap-1 mt-2 text-xs font-bold text-brand-navy-900 hover:underline"
+                >
+                  <span>Start shopping uniform sets</span>
+                  <ArrowRight className="h-3 w-3" />
+                </Link>
+              </div>
             )}
           </div>
-
-          {/* Quick Access Tiles */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 my-6">
-            <Link
-              href="/track-order"
-              className="rounded-2xl border border-slate-200 p-4 hover:border-brand-navy-900 hover:shadow-xs transition-all flex items-center justify-between group"
-            >
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-sky-50 flex items-center justify-center text-sky-600">
-                  <PackageCheck className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-sm text-brand-navy-950">Track Orders</h3>
-                  <p className="text-[11px] text-slate-500">View shipment and dispatch status</p>
-                </div>
-              </div>
-              <ArrowRight className="h-4 w-4 text-slate-400 group-hover:translate-x-1 transition-transform" />
-            </Link>
-
-            <Link
-              href="/wishlist"
-              className="rounded-2xl border border-slate-200 p-4 hover:border-brand-navy-900 hover:shadow-xs transition-all flex items-center justify-between group"
-            >
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-rose-50 flex items-center justify-center text-rose-600">
-                  <Heart className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-sm text-brand-navy-950">Saved Wishlist</h3>
-                  <p className="text-[11px] text-slate-500">Your saved school uniforms & items</p>
-                </div>
-              </div>
-              <ArrowRight className="h-4 w-4 text-slate-400 group-hover:translate-x-1 transition-transform" />
-            </Link>
-
-            <Link
-              href="/categories"
-              className="rounded-2xl border border-slate-200 p-4 hover:border-brand-navy-900 hover:shadow-xs transition-all flex items-center justify-between group"
-            >
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
-                  <GraduationCap className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-sm text-brand-navy-950">School Uniforms Directory</h3>
-                  <p className="text-[11px] text-slate-500">Browse by school affiliation</p>
-                </div>
-              </div>
-              <ArrowRight className="h-4 w-4 text-slate-400 group-hover:translate-x-1 transition-transform" />
-            </Link>
-
-            <Link
-              href="/cart"
-              className="rounded-2xl border border-slate-200 p-4 hover:border-brand-navy-900 hover:shadow-xs transition-all flex items-center justify-between group"
-            >
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
-                  <ShoppingBag className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-sm text-brand-navy-950">Shopping Bag</h3>
-                  <p className="text-[11px] text-slate-500">Proceed to checkout</p>
-                </div>
-              </div>
-              <ArrowRight className="h-4 w-4 text-slate-400 group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </div>
-
-          {/* Super-Admin Management Block */}
-          {isAdminLoggedIn ? (
-            <div className="rounded-2xl bg-stone-900 text-white p-6 shadow-md">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <Shield className="h-5 w-5 text-amber-400" />
-                  <h3 className="text-base font-black uppercase tracking-wider text-amber-400">
-                    Super-Admin Management Portal
-                  </h3>
-                </div>
-                <span className="flex items-center gap-1.5 text-xs text-emerald-400 font-bold">
-                  <CheckCircle2 className="h-4 w-4" />
-                  Session Active
-                </span>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                <Link
-                  href="/admin"
-                  className="rounded-xl bg-stone-800 hover:bg-stone-700 p-3 text-center text-xs font-bold text-white transition-colors"
-                >
-                  Analytics Hub
-                </Link>
-                <Link
-                  href="/admin/schools"
-                  className="rounded-xl bg-brand-yellow-400 hover:bg-yellow-300 p-3 text-center text-xs font-black text-brand-navy-950 transition-colors"
-                >
-                  Schools &amp; Bindings
-                </Link>
-                <Link
-                  href="/admin/products"
-                  className="rounded-xl bg-stone-800 hover:bg-stone-700 p-3 text-center text-xs font-bold text-white transition-colors"
-                >
-                  Products &amp; Stock
-                </Link>
-                <Link
-                  href="/admin/homepage"
-                  className="rounded-xl bg-stone-800 hover:bg-stone-700 p-3 text-center text-xs font-bold text-white transition-colors"
-                >
-                  Homepage CMS
-                </Link>
-              </div>
-            </div>
-          ) : (
-            <div className="rounded-2xl border border-amber-200 bg-amber-50/50 p-6">
-              <div className="flex items-center gap-2 mb-2">
-                <Shield className="h-5 w-5 text-amber-600" />
-                <h3 className="text-sm font-black text-brand-navy-950 uppercase tracking-wider">
-                  Admin &amp; Staff Login
-                </h3>
-              </div>
-              <p className="text-xs text-slate-600 mb-4">
-                Store managers and administrators can enter their secret key below to unlock CMS access.
-              </p>
-              <form onSubmit={handleAdminLogin} className="flex flex-col sm:flex-row items-center gap-2">
-                <div className="relative flex-1 w-full">
-                  <Key className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" />
-                  <input
-                    type="password"
-                    placeholder="Enter Super-Admin Secret Key..."
-                    value={adminKey}
-                    onChange={(e) => setAdminKey(e.target.value)}
-                    className="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-10 pr-4 text-xs font-mono font-bold focus:border-brand-navy-950 focus:outline-hidden"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="w-full sm:w-auto rounded-xl bg-brand-navy-950 px-5 py-2.5 text-xs font-black uppercase tracking-wider text-amber-400 shadow-sm hover:bg-stone-900 transition-colors cursor-pointer"
-                >
-                  Authenticate
-                </button>
-              </form>
-            </div>
-          )}
         </div>
-      </Container>
-    </div>
+      </div>
+    </AccountLayout>
   );
 }

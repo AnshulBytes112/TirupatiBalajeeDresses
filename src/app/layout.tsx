@@ -50,6 +50,8 @@ export const viewport: Viewport = {
   maximumScale: 1,
 };
 
+import { AuthProvider } from "@/context/auth-context";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -58,24 +60,26 @@ export default function RootLayout({
   return (
     <html lang="en" className={outfit.variable}>
       <body className="min-h-screen bg-brand-cream text-brand-navy-950 antialiased flex flex-col justify-between selection:bg-brand-yellow-300 selection:text-brand-navy-950">
-        <Suspense fallback={<div className="h-16 w-full bg-white border-b border-slate-200" />}>
-          <Header />
-        </Suspense>
-        <main className="flex-1 w-full">{children}</main>
-        <Footer />
-        <MobileBottomNav />
-        <Toaster
-          position="top-center"
-          toastOptions={{
-            style: {
-              background: "#0F172A",
-              color: "#FFFFFF",
-              borderRadius: "1rem",
-              fontSize: "0.875rem",
-              fontWeight: 600,
-            },
-          }}
-        />
+        <AuthProvider>
+          <Suspense fallback={<div className="h-16 w-full bg-white border-b border-slate-200" />}>
+            <Header />
+          </Suspense>
+          <main className="flex-1 w-full">{children}</main>
+          <Footer />
+          <MobileBottomNav />
+          <Toaster
+            position="top-center"
+            toastOptions={{
+              style: {
+                background: "#0F172A",
+                color: "#FFFFFF",
+                borderRadius: "1rem",
+                fontSize: "0.875rem",
+                fontWeight: 600,
+              },
+            }}
+          />
+        </AuthProvider>
       </body>
     </html>
   );

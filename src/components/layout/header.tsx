@@ -32,10 +32,13 @@ import { siteConfig } from "@/config/site";
 import { Drawer } from "@/components/ui/drawer";
 import { cn } from "@/lib/utils";
 
+import { useAuth } from "@/context/auth-context";
+
 export function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { user, profile, signOut: supabaseSignOut } = useAuth();
   const [searchQuery, setSearchQuery] = React.useState("");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
@@ -48,9 +51,9 @@ export function Header() {
     // Check if admin key exists in localStorage
     if (typeof window !== "undefined") {
       const key = localStorage.getItem("tirupati_admin_key");
-      setIsAdminLoggedIn(Boolean(key && key.trim()));
+      setIsAdminLoggedIn(Boolean(key && key.trim()) || profile?.role === "SUPER_ADMIN");
     }
-  }, [pathname, isAccountMenuOpen]);
+  }, [pathname, isAccountMenuOpen, profile]);
 
   // Click outside listener to close account menu
   React.useEffect(() => {
@@ -66,14 +69,17 @@ export function Header() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     if (typeof window !== "undefined") {
       localStorage.removeItem("tirupati_admin_key");
-      localStorage.removeItem("user_session");
       setIsAdminLoggedIn(false);
       setIsAccountMenuOpen(false);
-      toast.success("Logged out successfully");
-      router.push("/");
+      if (user) {
+        await supabaseSignOut();
+      } else {
+        toast.success("Logged out successfully");
+        router.push("/");
+      }
     }
   };
 
@@ -267,15 +273,14 @@ export function Header() {
                   <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />
                 )}
               </button>
-
               {/* Account Dropdown Menu */}
               {isAccountMenuOpen && (
                 <div className="absolute right-0 mt-2 w-64 rounded-2xl bg-white p-2 shadow-2xl border border-slate-200 z-50 animate-in fade-in zoom-in-95 duration-150">
                   {/* Account Header / Status */}
                   <div className="px-3 py-2.5 border-b border-slate-100">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-black text-brand-navy-950 uppercase tracking-wider">
-                        {isAdminLoggedIn ? "Admin Session" : "My Account"}
+                      <span className="text-xs font-black text-brand-navy-950 uppercase tracking-wider truncate">
+                        {user ? profile?.name || "Customer Account" : "My Account"}
                       </span>
                       {isAdminLoggedIn && (
                         <span className="rounded-full bg-brand-navy-950 px-2 py-0.5 text-[9px] font-black uppercase text-amber-400">
@@ -284,71 +289,72 @@ export function Header() {
                       )}
                     </div>
                     <p className="text-[11px] text-slate-500 mt-0.5 truncate">
-                      {isAdminLoggedIn
-                        ? "Full Store & Catalog Access"
-                        : "Sign in for personalized orders"}
+                      {user ? user.email : "Sign in for orders & addresses"}
                     </p>
                   </div>
 
                   {/* Links List */}
                   <div className="py-1.5 space-y-0.5">
-                    {isAdminLoggedIn ? (
+                    {user ? (
                       <>
-                        <Link
-                          href="/admin"
-                          onClick={() => setIsAccountMenuOpen(false)}
-                          className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-brand-navy-950 hover:bg-amber-50/70 hover:text-amber-900 transition-colors"
-                        >
-                          <Shield className="h-4 w-4 text-amber-500" />
-                          <span>Super-Admin Hub</span>
-                        </Link>
-                        <Link
-                          href="/admin/schools"
-                          onClick={() => setIsAccountMenuOpen(false)}
-                          className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 hover:text-brand-navy-950 transition-colors"
-                        >
-                          <GraduationCap className="h-4 w-4 text-slate-500" />
-                          <span>Schools &amp; Bindings</span>
-                        </Link>
-                        <Link
-                          href="/admin/products"
-                          onClick={() => setIsAccountMenuOpen(false)}
-                          className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 hover:text-brand-navy-950 transition-colors"
-                        >
-                          <ShoppingBag className="h-4 w-4 text-slate-500" />
-                          <span>Products &amp; Stock</span>
-                        </Link>
-                        <Link
-                          href="/admin/categories"
-                          onClick={() => setIsAccountMenuOpen(false)}
-                          className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 hover:text-brand-navy-950 transition-colors"
-                        >
-                          <FolderTree className="h-4 w-4 text-slate-500" />
-                          <span>Category CMS</span>
-                        </Link>
                         <Link
                           href="/account"
                           onClick={() => setIsAccountMenuOpen(false)}
-                          className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 hover:text-brand-navy-950 transition-colors"
+                          className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 hover:bg-slate-100 transition-colors"
                         >
-                          <User className="h-4 w-4 text-slate-500" />
-                          <span>Customer View</span>
+                          <User className="h-4 w-4 text-brand-navy-900" />
+                          <span>Account Dashboard</span>
                         </Link>
+                        <Link
+                          href="/account/orders"
+                          onClick={() => setIsAccountMenuOpen(false)}
+                          className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 transition-colors"
+                        >
+                          <PackageCheck className="h-4 w-4 text-slate-500" />
+                          <span>My Orders</span>
+                        </Link>
+                        <Link
+                          href="/account/wishlist"
+                          onClick={() => setIsAccountMenuOpen(false)}
+                          className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 transition-colors"
+                        >
+                          <Heart className="h-4 w-4 text-rose-500" />
+                          <span>Saved Wishlist</span>
+                        </Link>
+                        <Link
+                          href="/account/addresses"
+                          onClick={() => setIsAccountMenuOpen(false)}
+                          className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 transition-colors"
+                        >
+                          <MapPin className="h-4 w-4 text-amber-600" />
+                          <span>Saved Addresses</span>
+                        </Link>
+
+                        {isAdminLoggedIn && (
+                          <Link
+                            href="/admin"
+                            onClick={() => setIsAccountMenuOpen(false)}
+                            className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-amber-900 bg-amber-50/70 hover:bg-amber-100 transition-colors"
+                          >
+                            <Shield className="h-4 w-4 text-amber-600" />
+                            <span>Super-Admin Hub</span>
+                          </Link>
+                        )}
                       </>
                     ) : (
                       <>
                         <Link
-                          href="/account"
+                          href="/auth/login"
                           onClick={() => setIsAccountMenuOpen(false)}
-                          className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-brand-navy-950 hover:bg-slate-100 transition-colors"
+                          className="flex items-center justify-center gap-2 rounded-xl bg-brand-navy-950 px-3 py-2.5 text-xs font-bold text-white hover:bg-brand-navy-800 transition-colors my-1"
                         >
-                          <LogIn className="h-4 w-4 text-slate-600" />
-                          <span>Sign In / Customer Account</span>
+                          <LogIn className="h-4 w-4 text-amber-400" />
+                          <span>Login or Create Account</span>
                         </Link>
                         <Link
                           href="/track-order"
                           onClick={() => setIsAccountMenuOpen(false)}
-                          className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 hover:text-brand-navy-950 transition-colors"
+                          className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 transition-colors"
                         >
                           <PackageCheck className="h-4 w-4 text-slate-500" />
                           <span>Orders &amp; Tracking</span>
@@ -359,15 +365,15 @@ export function Header() {
                           className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-amber-700 bg-amber-50/60 hover:bg-amber-100 transition-colors"
                         >
                           <Shield className="h-4 w-4 text-amber-500" />
-                          <span>Admin Login Portal</span>
+                          <span>Admin Portal</span>
                         </Link>
                       </>
                     )}
                   </div>
 
                   {/* Logout Action */}
-                  <div className="pt-1.5 mt-1 border-t border-slate-100">
-                    {isAdminLoggedIn ? (
+                  {(user || isAdminLoggedIn) && (
+                    <div className="pt-1.5 mt-1 border-t border-slate-100">
                       <button
                         type="button"
                         onClick={handleLogout}
@@ -375,21 +381,12 @@ export function Header() {
                       >
                         <span className="flex items-center gap-2">
                           <LogOut className="h-4 w-4" />
-                          <span>Logout / Lock Session</span>
+                          <span>Sign Out</span>
                         </span>
                         <span className="text-[10px] uppercase font-mono text-rose-400">Exit</span>
                       </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={handleLogout}
-                        className="w-full flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
-                      >
-                        <LogOut className="h-4 w-4 text-slate-400" />
-                        <span>Sign Out / Clear Cache</span>
-                      </button>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
