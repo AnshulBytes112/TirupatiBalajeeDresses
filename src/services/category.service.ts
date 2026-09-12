@@ -52,8 +52,8 @@ function slugify(text: string): string {
 }
 
 export class CategoryService {
-  async getCategories() {
-    const categories = await categoryRepository.findAll();
+  async getCategories(includeInactive = false) {
+    const categories = await categoryRepository.findAll(includeInactive);
     return categories.map((cat) => ({
       id: cat.id,
       name: cat.name,
@@ -75,8 +75,8 @@ export class CategoryService {
     }));
   }
 
-  async getAllCategoriesFlat() {
-    const categories = await categoryRepository.findAllFlat();
+  async getAllCategoriesFlat(includeInactive = false) {
+    const categories = await categoryRepository.findAllFlat(includeInactive);
     return categories.map((cat) => ({
       id: cat.id,
       name: cat.name,

@@ -73,13 +73,13 @@ export function CategoryGrid({ cards, className }: CategoryGridProps) {
                 <span className="absolute top-0 right-0 text-sm sm:text-base select-none">
                   {cat.badgeEmoji}
                 </span>
-                <div className="relative w-full h-full flex items-center justify-center">
+                <div className="relative w-full h-full flex items-center justify-center rounded-full overflow-hidden">
                   {cat.imageSrc ? (
                     <Image
                       src={cat.imageSrc}
                       alt={cat.name}
                       fill
-                      className="object-contain p-1 group-hover:scale-105 transition-transform mix-blend-multiply"
+                      className="object-cover group-hover:scale-105 transition-transform mix-blend-multiply"
                       sizes="(max-width: 640px) 45vw, (max-width: 1024px) 20vw, 120px"
                       priority={index < 5}
                     />

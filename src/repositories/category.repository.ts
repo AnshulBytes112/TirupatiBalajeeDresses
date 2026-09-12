@@ -1,13 +1,21 @@
 import { BaseRepository } from "./base.repository";
 
 export class CategoryRepository extends BaseRepository {
-  async findAll() {
+  async findAll(includeInactive = false) {
+    const whereClause = includeInactive 
+      ? { isDeleted: false, parentId: null } 
+      : { isActive: true, isDeleted: false, parentId: null };
+      
+    const childrenWhereClause = includeInactive
+      ? { isDeleted: false }
+      : { isActive: true, isDeleted: false };
+
     return this.db.category.findMany({
-      where: { isActive: true, isDeleted: false, parentId: null },
+      where: whereClause,
       orderBy: { displayOrder: "asc" },
       include: {
         children: {
-          where: { isActive: true, isDeleted: false },
+          where: childrenWhereClause,
           orderBy: { displayOrder: "asc" },
           include: {
             _count: {
@@ -36,9 +44,13 @@ export class CategoryRepository extends BaseRepository {
     });
   }
 
-  async findAllFlat() {
+  async findAllFlat(includeInactive = false) {
+    const whereClause = includeInactive
+      ? { isDeleted: false }
+      : { isActive: true, isDeleted: false };
+
     return this.db.category.findMany({
-      where: { isActive: true, isDeleted: false },
+      where: whereClause,
       orderBy: { displayOrder: "asc" },
       include: {
         parent: {

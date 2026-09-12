@@ -104,7 +104,7 @@ export default function AdminCategoriesPage() {
 
     setIsLoading(true);
     try {
-      const res = await fetch("/api/categories", {
+      const res = await fetch("/api/categories?admin=true", {
         headers: { "x-admin-key": key },
       });
 

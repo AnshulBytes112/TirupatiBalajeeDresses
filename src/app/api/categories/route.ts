@@ -10,17 +10,19 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const format = searchParams.get("format");
 
+    const isAdmin = searchParams.get("admin") === "true";
+
     if (format === "navigation") {
       const navItems = await categoryService.getNavigationCategories();
       return successResponse(navItems);
     }
 
     if (format === "flat") {
-      const flatCategories = await categoryService.getAllCategoriesFlat();
+      const flatCategories = await categoryService.getAllCategoriesFlat(isAdmin);
       return successResponse(flatCategories);
     }
 
-    const categories = await categoryService.getCategories();
+    const categories = await categoryService.getCategories(isAdmin);
     return successResponse(categories);
   } catch (error: unknown) {
     console.error("GET /api/categories error:", error);
