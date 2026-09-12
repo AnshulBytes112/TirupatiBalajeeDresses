@@ -51,9 +51,12 @@ export default function AdminAuditLogsPage() {
     }
   }, []);
 
-  async function fetchLogs(keyToUse?: string) {
-    const key = keyToUse || adminKey;
-    if (!key) return;
+  async function fetchLogs(keyToUse?: string, retryCount = 0) {
+    const key = (keyToUse || adminKey)?.trim();
+    if (!key) {
+      setIsCheckingAuth(false);
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -71,11 +74,22 @@ export default function AdminAuditLogsPage() {
         setLogs(json.data?.logs || []);
         setIsAuthorized(true);
         localStorage.setItem("tirupati_admin_key", key);
-      } else {
+      } else if (res.status === 401 || res.status === 403) {
         setIsAuthorized(false);
         toast.error("Access denied. Invalid Super-Admin key.");
+      } else {
+        if (retryCount < 2) {
+          setTimeout(() => fetchLogs(key, retryCount + 1), 1500);
+          return;
+        }
+        setIsAuthorized(true);
+        toast.error("Server is warming up. Please refresh in a moment.");
       }
     } catch (e) {
+      if (retryCount < 2) {
+        setTimeout(() => fetchLogs(key, retryCount + 1), 1500);
+        return;
+      }
       toast.error("Failed to connect to Audit Logs API");
     } finally {
       setIsLoading(false);

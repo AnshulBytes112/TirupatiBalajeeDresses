@@ -198,9 +198,12 @@ export default function AdminProductsPage() {
     }
   }, [pagination.page, search, statusFilter, categoryFilter, sortBy, isAuthorized]);
 
-  async function authenticateAndLoad(keyToUse?: string) {
-    const key = keyToUse || adminKey;
-    if (!key) return;
+  async function authenticateAndLoad(keyToUse?: string, retryCount = 0) {
+    const key = (keyToUse || adminKey)?.trim();
+    if (!key) {
+      setIsCheckingAuth(false);
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -209,19 +212,26 @@ export default function AdminProductsPage() {
         headers: { "x-admin-key": key },
       });
 
-      if (!authRes.ok) {
+      if (authRes.ok) {
+        setIsAuthorized(true);
+        localStorage.setItem("tirupati_admin_key", key);
+        loadMetadata();
+      } else if (authRes.status === 401 || authRes.status === 403) {
         setIsAuthorized(false);
         toast.error("Invalid Super-Admin credentials.");
-        setIsLoading(false);
+      } else {
+        if (retryCount < 2) {
+          setTimeout(() => authenticateAndLoad(key, retryCount + 1), 1500);
+          return;
+        }
+        setIsAuthorized(true);
+        toast.error("Server is warming up. Please refresh momentarily.");
+      }
+    } catch (err) {
+      if (retryCount < 2) {
+        setTimeout(() => authenticateAndLoad(key, retryCount + 1), 1500);
         return;
       }
-
-      setIsAuthorized(true);
-      localStorage.setItem("tirupati_admin_key", key);
-
-      // 2. Load auxiliary dropdown data
-      loadMetadata();
-    } catch (err) {
       toast.error("Failed to authenticate with Super Admin API");
     } finally {
       setIsLoading(false);

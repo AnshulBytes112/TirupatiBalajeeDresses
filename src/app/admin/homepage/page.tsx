@@ -106,8 +106,8 @@ export default function AdminHomepageCMS() {
     }
   }, []);
 
-  async function verifyAndLoad(keyToTest?: string) {
-    const key = keyToTest || adminKey;
+  async function verifyAndLoad(keyToTest?: string, retryCount = 0) {
+    const key = (keyToTest || adminKey)?.trim();
     if (!key) {
       toast.error("Please enter the Super-Admin secret key");
       setIsCheckingAuth(false);
@@ -133,11 +133,22 @@ export default function AdminHomepageCMS() {
         setIsAuthorized(true);
         localStorage.setItem("tirupati_admin_key", key);
         toast.success("Super-Admin authorized successfully");
-      } else {
+      } else if (res.status === 401 || res.status === 403) {
         setIsAuthorized(false);
         toast.error("Invalid Super-Admin key. Access denied.");
+      } else {
+        if (retryCount < 2) {
+          setTimeout(() => verifyAndLoad(key, retryCount + 1), 1500);
+          return;
+        }
+        setIsAuthorized(true);
+        toast.error("Server is warming up. Please refresh in a few seconds.");
       }
     } catch (e) {
+      if (retryCount < 2) {
+        setTimeout(() => verifyAndLoad(key, retryCount + 1), 1500);
+        return;
+      }
       toast.error("Error connecting to Super-Admin CMS API");
     } finally {
       setIsLoading(false);

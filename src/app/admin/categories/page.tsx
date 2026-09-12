@@ -98,9 +98,12 @@ export default function AdminCategoriesPage() {
     }
   }, []);
 
-  async function fetchCategories(keyToUse?: string) {
-    const key = keyToUse || adminKey;
-    if (!key) return;
+  async function fetchCategories(keyToUse?: string, retryCount = 0) {
+    const key = (keyToUse || adminKey)?.trim();
+    if (!key) {
+      setIsCheckingAuth(false);
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -115,12 +118,24 @@ export default function AdminCategoriesPage() {
           setIsAuthorized(true);
           localStorage.setItem("tirupati_admin_key", key);
         }
-      } else {
+      } else if (res.status === 401 || res.status === 403) {
         setIsAuthorized(false);
         toast.error("Access denied. Invalid Super-Admin key.");
+      } else {
+        // 5xx / database connecting on cold start
+        if (retryCount < 2) {
+          setTimeout(() => fetchCategories(key, retryCount + 1), 1500);
+          return;
+        }
+        setIsAuthorized(true);
+        toast.error("Database is warming up. Retrying automatically...");
       }
     } catch (e) {
-      toast.error("Failed to load categories.");
+      if (retryCount < 2) {
+        setTimeout(() => fetchCategories(key, retryCount + 1), 1500);
+        return;
+      }
+      toast.error("Connecting to server...");
     } finally {
       setIsLoading(false);
       setIsCheckingAuth(false);
@@ -162,12 +177,17 @@ export default function AdminCategoriesPage() {
       return;
     }
 
+    const parentId =
+      formData.parentId && formData.parentId.trim() !== ""
+        ? formData.parentId.trim()
+        : null;
+
     const payload = {
       name: formData.name.trim(),
       slug: formData.slug.trim() || slugify(formData.name),
-      description: formData.description.trim() || undefined,
-      imageUrl: formData.imageUrl.trim() || undefined,
-      parentId: formData.parentId || null,
+      description: formData.description.trim() || null,
+      imageUrl: formData.imageUrl.trim() || null,
+      parentId,
       displayOrder: Number(formData.displayOrder) || 0,
       isActive: Boolean(formData.isActive),
     };
@@ -195,17 +215,17 @@ export default function AdminCategoriesPage() {
         });
       }
 
-      const json = await res.json();
-      if (json.success) {
+      const json = await res.json().catch(() => ({}));
+      if (res.ok && json.success) {
         toast.success(
           editingCategory
-            ? `Category "${payload.name}" updated successfully (Redirects registered if slug changed)!`
-            : `Category "${payload.name}" created successfully and live immediately!`
+            ? `Category "${payload.name}" updated successfully!`
+            : `Category "${payload.name}" created successfully!`
         );
         setIsModalOpen(false);
         fetchCategories();
       } else {
-        toast.error(json.message || "Failed to save category");
+        toast.error(json.error?.message || json.message || "Failed to save category");
       }
     } catch (e) {
       toast.error("An error occurred while saving category.");

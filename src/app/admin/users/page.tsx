@@ -86,9 +86,12 @@ export default function AdminUsersRBACPage() {
     }
   }, []);
 
-  async function fetchUsers(keyToUse?: string) {
-    const key = keyToUse || adminKey;
-    if (!key) return;
+  async function fetchUsers(keyToUse?: string, retryCount = 0) {
+    const key = (keyToUse || adminKey)?.trim();
+    if (!key) {
+      setIsCheckingAuth(false);
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -106,11 +109,22 @@ export default function AdminUsersRBACPage() {
         setUsers(json.data?.users || []);
         setIsAuthorized(true);
         localStorage.setItem("tirupati_admin_key", key);
-      } else {
+      } else if (res.status === 401 || res.status === 403) {
         setIsAuthorized(false);
         toast.error("Access denied. Invalid Super-Admin key.");
+      } else {
+        if (retryCount < 2) {
+          setTimeout(() => fetchUsers(key, retryCount + 1), 1500);
+          return;
+        }
+        setIsAuthorized(true);
+        toast.error("Server is warming up. Please refresh in a moment.");
       }
     } catch (e) {
+      if (retryCount < 2) {
+        setTimeout(() => fetchUsers(key, retryCount + 1), 1500);
+        return;
+      }
       toast.error("Failed to connect to Users API");
     } finally {
       setIsLoading(false);

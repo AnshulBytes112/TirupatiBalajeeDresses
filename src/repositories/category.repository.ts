@@ -148,19 +148,20 @@ export class CategoryRepository extends BaseRepository {
   async create(data: {
     name: string;
     slug: string;
-    description?: string;
-    imageUrl?: string;
+    description?: string | null;
+    imageUrl?: string | null;
     parentId?: string | null;
     displayOrder?: number;
     isActive?: boolean;
   }) {
+    const parentId = data.parentId && data.parentId.trim() !== "" ? data.parentId : null;
     return this.db.category.create({
       data: {
         name: data.name,
         slug: data.slug,
-        description: data.description,
-        imageUrl: data.imageUrl,
-        parentId: data.parentId || null,
+        description: data.description || null,
+        imageUrl: data.imageUrl || null,
+        parentId,
         displayOrder: data.displayOrder ?? 0,
         isActive: data.isActive ?? true,
       },
@@ -176,8 +177,8 @@ export class CategoryRepository extends BaseRepository {
     data: {
       name?: string;
       slug?: string;
-      description?: string;
-      imageUrl?: string;
+      description?: string | null;
+      imageUrl?: string | null;
       parentId?: string | null;
       displayOrder?: number;
       isActive?: boolean;
@@ -188,11 +189,23 @@ export class CategoryRepository extends BaseRepository {
       await this.createRedirect(existing.slug, data.slug, id);
     }
 
+    const parentId =
+      data.parentId !== undefined
+        ? data.parentId && data.parentId.trim() !== ""
+          ? data.parentId
+          : null
+        : undefined;
+
     return this.db.category.update({
       where: { id },
       data: {
-        ...data,
-        parentId: data.parentId !== undefined ? data.parentId : undefined,
+        ...(data.name !== undefined && { name: data.name }),
+        ...(data.slug !== undefined && { slug: data.slug }),
+        ...(data.description !== undefined && { description: data.description || null }),
+        ...(data.imageUrl !== undefined && { imageUrl: data.imageUrl || null }),
+        ...(data.displayOrder !== undefined && { displayOrder: data.displayOrder }),
+        ...(data.isActive !== undefined && { isActive: data.isActive }),
+        ...(parentId !== undefined && { parentId }),
       },
       include: {
         parent: true,

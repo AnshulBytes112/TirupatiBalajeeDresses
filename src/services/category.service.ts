@@ -1,5 +1,6 @@
 import { categoryRepository } from "@/repositories/category.repository";
-import { NotFoundError } from "@/lib/errors";
+import { prisma } from "@/lib/prisma";
+import { NotFoundError, BadRequestError } from "@/lib/errors";
 
 export interface ResolvedCategoryContext {
   category: {
@@ -264,17 +265,37 @@ export class CategoryService {
   }) {
     const generatedSlug = data.slug ? slugify(data.slug) : slugify(data.name);
 
-    // Ensure slug uniqueness
-    const existing = await categoryRepository.findBySlug(generatedSlug);
+    if (!generatedSlug) {
+      throw new BadRequestError("Valid category name or slug is required.");
+    }
+
+    // Check slug uniqueness directly against the database table
+    const existing = await prisma.category.findUnique({
+      where: { slug: generatedSlug },
+    });
+
     if (existing) {
-      throw new Error(`Category with slug '${generatedSlug}' already exists.`);
+      if (existing.isDeleted) {
+        // Restore existing soft-deleted category
+        return categoryRepository.update(existing.id, {
+          name: data.name,
+          description: data.description || null,
+          imageUrl: data.imageUrl || null,
+          parentId: data.parentId || null,
+          displayOrder: data.displayOrder ?? 0,
+          isActive: data.isActive ?? true,
+        });
+      }
+      throw new BadRequestError(
+        `Category with slug '${generatedSlug}' already exists. Please choose a different name or slug.`
+      );
     }
 
     return categoryRepository.create({
       name: data.name,
       slug: generatedSlug,
-      description: data.description,
-      imageUrl: data.imageUrl,
+      description: data.description || null,
+      imageUrl: data.imageUrl || null,
       parentId: data.parentId || null,
       displayOrder: data.displayOrder ?? 0,
       isActive: data.isActive ?? true,
@@ -300,9 +321,11 @@ export class CategoryService {
 
     let nextSlug = data.slug ? slugify(data.slug) : undefined;
     if (nextSlug && nextSlug !== existing.slug) {
-      const slugConflict = await categoryRepository.findBySlug(nextSlug);
+      const slugConflict = await prisma.category.findUnique({
+        where: { slug: nextSlug },
+      });
       if (slugConflict && slugConflict.id !== id) {
-        throw new Error(`Slug '${nextSlug}' is already in use by another category.`);
+        throw new BadRequestError(`Slug '${nextSlug}' is already in use by another category.`);
       }
     }
 
